@@ -1,0 +1,55 @@
+server:
+  port: 8080
+  address: 127.0.0.1  # Bind to localhost only (Nginx will proxy)
+
+spring:
+  application:
+    name: myapp
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/myappdb
+    username: myappuser
+    password: ${DB_PASSWORD}  # Set via environment variable
+    driver-class-name: org.postgresql.Driver
+    
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Use 'validate' in production, 'update' for development
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.example.myapp: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/myapp/application.log
