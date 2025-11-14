@@ -2,6 +2,7 @@ package com.example.myapp.service;
 
 import com.example.myapp.dto.Product;
 import com.example.myapp.mapper.ProductMapper;
+import com.example.myapp.repository.OrderRepository;
 import com.example.myapp.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
     private final ProductMapper productMapper;
 
     /**
@@ -102,15 +104,24 @@ public class ProductService {
 
     /**
      * Delete product
+     * Throws IllegalStateException if product has existing orders
      */
     @Transactional
     public boolean deleteProduct(Long id) {
         log.info("Deleting product with id: {}", id);
-        if (productRepository.existsById(id)) {
-            productRepository.deleteById(id);
-            return true;
+        if (!productRepository.existsById(id)) {
+            return false;
         }
-        return false;
+        
+        // Check if product has any orders
+        long orderCount = orderRepository.countByProductId(id);
+        if (orderCount > 0) {
+            log.warn("Cannot delete product {} - it has {} existing orders", id, orderCount);
+            throw new IllegalStateException("Cannot delete product with existing orders. Found " + orderCount + " order(s).");
+        }
+        
+        productRepository.deleteById(id);
+        return true;
     }
 
     /**

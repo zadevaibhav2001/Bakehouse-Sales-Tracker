@@ -257,6 +257,14 @@ async function deleteProduct(productId) {
         if (response.ok) {
             loadProducts();
             showSuccess('Product deleted successfully');
+        } else if (response.status === 409) {
+            // Conflict - product has existing orders
+            const error = await response.json();
+            showError(error.message || 'Cannot delete product with existing orders');
+        } else if (response.status === 404) {
+            showError('Product not found');
+        } else {
+            showError('Failed to delete product');
         }
     } catch (error) {
         console.error('Error deleting product:', error);

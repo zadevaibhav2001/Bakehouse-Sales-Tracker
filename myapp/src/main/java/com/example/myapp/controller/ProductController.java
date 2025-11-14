@@ -133,14 +133,25 @@ public class ProductController {
      * DELETE /api/products/{id}
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
         log.info("DELETE /api/products/{}", id);
-        boolean deleted = productService.deleteProduct(id);
-        if (!deleted) {
-            return ResponseEntity.notFound().build();
+        try {
+            boolean deleted = productService.deleteProduct(id);
+            if (!deleted) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            log.warn("Cannot delete product {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse(e.getMessage()));
         }
-        return ResponseEntity.noContent().build();
     }
+    
+    /**
+     * Simple error response record
+     */
+    private record ErrorResponse(String message) {}
 
     /**
      * Export all products to Excel
