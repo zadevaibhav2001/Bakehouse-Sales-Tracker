@@ -134,8 +134,11 @@ async function loadDashboard() {
 
         displayRecentOrders(orders.slice(0, 5));
     } catch (error) {
-        console.error('Error loading dashboard:', error);
-        showError('Failed to load dashboard data');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error loading dashboard',
+            text: 'Failed to load dashboard data'
+        });
     }
 }
 
@@ -164,8 +167,11 @@ async function loadProducts() {
         const products = await response.json();
         displayProducts(products);
     } catch (error) {
-        console.error('Error loading products:', error);
-        showError('Failed to load products');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error loading products',
+            text: 'Failed to load products'
+        });
     }
 }
 
@@ -225,8 +231,11 @@ async function addProduct(event) {
             showSuccess('Product added successfully');
         }
     } catch (error) {
-        console.error('Error adding product:', error);
-        showError('Failed to add product');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error adding product',
+            text: 'Failed to add product'
+        });
     }
 }
 
@@ -241,13 +250,25 @@ async function toggleStock(productId, inStock) {
             showSuccess('Stock status updated');
         }
     } catch (error) {
-        console.error('Error updating stock:', error);
-        showError('Failed to update stock status');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error updating stock',
+            text: 'Failed to update stock status'
+        });
     }
 }
 
 async function deleteProduct(productId) {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: 'You want to delete this product?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
 
     try {
         const response = await fetch(`${API_BASE}/products/${productId}`, {
@@ -260,15 +281,30 @@ async function deleteProduct(productId) {
         } else if (response.status === 409) {
             // Conflict - product has existing orders
             const error = await response.json();
-            showError(error.message || 'Cannot delete product with existing orders');
+            Swal.fire({
+                icon: 'error',
+                title: 'Cannot delete product',
+                text: error.message || 'Cannot delete product with existing orders'
+            });
         } else if (response.status === 404) {
-            showError('Product not found');
+            Swal.fire({
+                icon: 'error',
+                title: 'Product not found',
+                text: 'The product you are trying to delete was not found'
+            });
         } else {
-            showError('Failed to delete product');
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed to delete product',
+                text: 'An error occurred while deleting the product'
+            });
         }
     } catch (error) {
-        console.error('Error deleting product:', error);
-        showError('Failed to delete product');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error deleting product',
+            text: 'Failed to delete product'
+        });
     }
 }
 
@@ -288,8 +324,11 @@ async function loadOrders() {
         const products = await productsResponse.json();
         populateProductSelect(products);
     } catch (error) {
-        console.error('Error loading orders:', error);
-        showError('Failed to load orders');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error loading orders',
+            text: 'Failed to load orders'
+        });
     }
 }
 
@@ -361,13 +400,25 @@ async function addOrder(event) {
             showSuccess('Order created successfully');
         }
     } catch (error) {
-        console.error('Error creating order:', error);
-        showError('Failed to create order');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error creating order',
+            text: 'Failed to create order'
+        });
     }
 }
 
 async function deleteOrder(orderId) {
-    if (!confirm('Are you sure you want to delete this order?')) return;
+    const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: 'You want to delete this order?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
 
     try {
         const response = await fetch(`${API_BASE}/orders/${orderId}`, {
@@ -380,8 +431,11 @@ async function deleteOrder(orderId) {
             showSuccess('Order deleted successfully');
         }
     } catch (error) {
-        console.error('Error deleting order:', error);
-        showError('Failed to delete order');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error deleting order',
+            text: 'Failed to delete order'
+        });
     }
 }
 
@@ -390,7 +444,11 @@ async function filterOrders() {
     const endDate = document.getElementById('endDate').value;
 
     if (!startDate || !endDate) {
-        showError('Please select both start and end dates');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Missing dates',
+            text: 'Please select both start and end dates'
+        });
         return;
     }
 
@@ -400,8 +458,11 @@ async function filterOrders() {
         const orders = await response.json();
         displayOrders(orders);
     } catch (error) {
-        console.error('Error filtering orders:', error);
-        showError('Failed to filter orders');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error filtering orders',
+            text: 'Failed to filter orders'
+        });
     }
 }
 
@@ -415,7 +476,11 @@ async function getRevenueReport() {
     const endDate = document.getElementById('reportEndDate').value;
 
     if (!startDate || !endDate) {
-        showError('Please select both start and end dates');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Missing dates',
+            text: 'Please select both start and end dates'
+        });
         return;
     }
 
@@ -430,8 +495,11 @@ async function getRevenueReport() {
             <p><strong>Total Revenue:</strong> <span style="color: var(--success-color); font-size: 1.5rem;">₹${data.totalRevenue.toFixed(2)}</span></p>
         `;
     } catch (error) {
-        console.error('Error getting revenue report:', error);
-        showError('Failed to generate revenue report');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error getting revenue report',
+            text: 'Failed to generate revenue report'
+        });
     }
 }
 
@@ -439,7 +507,11 @@ async function getHighValueOrders() {
     const minCost = document.getElementById('minCost').value;
 
     if (!minCost) {
-        showError('Please enter a minimum cost');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Missing minimum cost',
+            text: 'Please enter a minimum cost'
+        });
         return;
     }
 
@@ -465,8 +537,11 @@ async function getHighValueOrders() {
             </ul>
         `;
     } catch (error) {
-        console.error('Error getting high value orders:', error);
-        showError('Failed to get high value orders');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error getting high value orders',
+            text: 'Failed to get high value orders'
+        });
     }
 }
 
@@ -490,11 +565,21 @@ function formatDate(dateString) {
 }
 
 function showSuccess(message) {
-    alert(message); // Replace with a better notification system
+    Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: message,
+        timer: 2000,
+        showConfirmButton: false
+    });
 }
 
 function showError(message) {
-    alert('Error: ' + message); // Replace with a better notification system
+    Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: message
+    });
 }
 
 // Search and Filter
