@@ -7,28 +7,29 @@ spring:
     name: myapp
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/myappdb
-    username: myappuser
-    password: ${DB_PASSWORD}  # Set via environment variable
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:sqlite:myapp.db
+    driver-class-name: org.sqlite.JDBC
     
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
+      maximum-pool-size: 5
+      minimum-idle: 1
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
 
   jpa:
     hibernate:
-      ddl-auto: validate  # Use 'validate' in production, 'update' for development
+      ddl-auto: update  # SQLite will auto-create tables
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.community.dialect.SQLiteDialect
         format_sql: true
         jdbc:
-          time_zone: UTC
+          batch_size: 5
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
 
 # Actuator endpoints
 management:

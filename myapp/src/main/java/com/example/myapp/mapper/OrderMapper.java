@@ -27,7 +27,10 @@ public class OrderMapper {
             entity.getOrderId(),
             productMapper.toDto(entity.getProduct()),
             entity.getQuantity(),
-            LocalDateTime.ofInstant(entity.getOrderDateTime(), ZoneOffset.UTC)
+            entity.getTotalCost(),
+            entity.getOrderDateTime(),
+            entity.getCreatedAt(),
+            entity.getUpdatedAt()
         );
     }
 
@@ -43,7 +46,8 @@ public class OrderMapper {
         entity.setOrderId(dto.orderId());
         entity.setProduct(product);
         entity.setQuantity(dto.quantity());
-        entity.setOrderDateTime(dto.orderDateTime().toInstant(ZoneOffset.UTC));
+        entity.setOrderDateTime(dto.orderDateTime());
+        // totalCost will be calculated automatically in @PrePersist
         return entity;
     }
 
@@ -56,6 +60,7 @@ public class OrderMapper {
         }
         entity.setProduct(product);
         entity.setQuantity(dto.quantity());
-        entity.setOrderDateTime(dto.orderDateTime().toInstant(ZoneOffset.UTC));
+        entity.setOrderDateTime(dto.orderDateTime());
+        // totalCost will be recalculated automatically in @PreUpdate
     }
 }

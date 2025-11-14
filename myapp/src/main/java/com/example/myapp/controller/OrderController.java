@@ -1,15 +1,20 @@
 package com.example.myapp.controller;
 
 import com.example.myapp.dto.Order;
+import com.example.myapp.service.ExcelExportService;
 import com.example.myapp.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,6 +26,7 @@ import java.util.UUID;
 public class OrderController {
 
     private final OrderService orderService;
+    private final ExcelExportService excelExportService;
 
     /**
      * Get all orders
@@ -174,13 +180,136 @@ public class OrderController {
         log.info("GET /api/orders/product/{}/stats", productId);
         Long totalQuantity = orderService.getTotalQuantityForProduct(productId);
         long orderCount = orderService.countOrdersForProduct(productId);
+        double totalRevenue = orderService.getTotalRevenueForProduct(productId);
         
         Map<String, Object> stats = Map.of(
             "productId", productId,
             "totalQuantityOrdered", totalQuantity,
-            "totalOrders", orderCount
+            "totalOrders", orderCount,
+            "totalRevenue", totalRevenue
         );
         
         return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * Get total revenue from all orders
+     * GET /api/orders/revenue/total
+     */
+    @GetMapping("/revenue/total")
+    public ResponseEntity<Map<String, Object>> getTotalRevenue() {
+        log.info("GET /api/orders/revenue/total");
+        double totalRevenue = orderService.getTotalRevenue();
+        return ResponseEntity.ok(Map.of("totalRevenue", totalRevenue));
+    }
+
+    /**
+     * Get revenue within a date range
+     * GET /api/orders/revenue/between?start=...&end=...
+     */
+    @GetMapping("/revenue/between")
+    public ResponseEntity<Map<String, Object>> getRevenueBetween(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        log.info("GET /api/orders/revenue/between?start={}&end={}", start, end);
+        double revenue = orderService.getRevenueBetween(start, end);
+        return ResponseEntity.ok(Map.of(
+            "startDate", start,
+            "endDate", end,
+            "totalRevenue", revenue
+        ));
+    }
+
+    /**
+     * Get high-value orders (above specified amount)
+     * GET /api/orders/high-value?minCost=100
+     */
+    @GetMapping("/high-value")
+    public ResponseEntity<List<Order>> getHighValueOrders(@RequestParam double minCost) {
+        log.info("GET /api/orders/high-value?minCost={}", minCost);
+        List<Order> orders = orderService.getHighValueOrders(minCost);
+        return ResponseEntity.ok(orders);
+    }
+
+    /**
+     * Export all orders to Excel
+     * GET /api/orders/export/excel
+     */
+    @GetMapping("/export/excel")
+    public ResponseEntity<byte[]> exportOrdersToExcel() {
+        log.info("GET /api/orders/export/excel - Exporting all orders");
+        try {
+            List<Order> orders = orderService.getAllOrders();
+            byte[] excelData = excelExportService.generateOrdersExcel(orders);
+            
+            String filename = "orders_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".xlsx";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", filename);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelData);
+        } catch (IOException e) {
+            log.error("Failed to generate Excel file", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Export orders for a specific product to Excel
+     * GET /api/orders/export/excel/product/{productId}
+     */
+    @GetMapping("/export/excel/product/{productId}")
+    public ResponseEntity<byte[]> exportProductOrdersToExcel(@PathVariable Long productId) {
+        log.info("GET /api/orders/export/excel/product/{} - Exporting orders for product", productId);
+        try {
+            List<Order> orders = orderService.getOrdersByProductId(productId);
+            byte[] excelData = excelExportService.generateOrdersExcel(orders);
+            
+            String filename = "orders_product_" + productId + "_" + 
+                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".xlsx";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", filename);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelData);
+        } catch (IOException e) {
+            log.error("Failed to generate Excel file", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Export orders within date range to Excel
+     * GET /api/orders/export/excel/between?start=...&end=...
+     */
+    @GetMapping("/export/excel/between")
+    public ResponseEntity<byte[]> exportOrdersBetweenToExcel(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        log.info("GET /api/orders/export/excel/between?start={}&end={}", start, end);
+        try {
+            List<Order> orders = orderService.getOrdersBetween(start, end);
+            byte[] excelData = excelExportService.generateOrdersExcel(orders);
+            
+            String filename = "orders_" + start.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + 
+                    "_to_" + end.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", filename);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelData);
+        } catch (IOException e) {
+            log.error("Failed to generate Excel file", e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

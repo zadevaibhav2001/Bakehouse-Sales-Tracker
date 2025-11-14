@@ -179,4 +179,47 @@ public class OrderService {
         log.debug("Counting orders for product: {}", productId);
         return orderRepository.countByProductId(productId);
     }
+
+    /**
+     * Get total revenue from all orders
+     */
+    @Transactional(readOnly = true)
+    public double getTotalRevenue() {
+        log.debug("Calculating total revenue");
+        Double total = orderRepository.getTotalRevenue();
+        return total != null ? total : 0.0;
+    }
+
+    /**
+     * Get total revenue for a specific product
+     */
+    @Transactional(readOnly = true)
+    public double getTotalRevenueForProduct(Long productId) {
+        log.debug("Calculating total revenue for product: {}", productId);
+        Double total = orderRepository.getTotalRevenueByProductId(productId);
+        return total != null ? total : 0.0;
+    }
+
+    /**
+     * Get total revenue within a date range
+     */
+    @Transactional(readOnly = true)
+    public double getRevenueBetween(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        log.debug("Calculating revenue between {} and {}", startDateTime, endDateTime);
+        Instant start = startDateTime.toInstant(ZoneOffset.UTC);
+        Instant end = endDateTime.toInstant(ZoneOffset.UTC);
+        Double total = orderRepository.getTotalRevenueBetween(start, end);
+        return total != null ? total : 0.0;
+    }
+
+    /**
+     * Get high-value orders (above specified amount)
+     */
+    @Transactional(readOnly = true)
+    public List<Order> getHighValueOrders(double minCost) {
+        log.debug("Fetching orders with cost greater than: {}", minCost);
+        return orderRepository.findByTotalCostGreaterThan(minCost).stream()
+            .map(orderMapper::toDto)
+            .collect(Collectors.toList());
+    }
 }

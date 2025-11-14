@@ -30,6 +30,9 @@ public class Order {
     private int quantity;
 
     @Column(nullable = false)
+    private double totalCost;
+
+    @Column(nullable = false)
     private Instant orderDateTime;
 
     @Column(nullable = false, updatable = false)
@@ -46,12 +49,18 @@ public class Order {
         if (orderDateTime == null) {
             orderDateTime = Instant.now();
         }
+        if (product != null) {
+            totalCost = quantity * product.getPrice();
+        }
         createdAt = Instant.now();
         updatedAt = Instant.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
+        if (product != null) {
+            totalCost = quantity * product.getPrice();
+        }
         updatedAt = Instant.now();
     }
 }

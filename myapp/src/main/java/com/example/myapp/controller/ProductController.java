@@ -1,13 +1,19 @@
 package com.example.myapp.controller;
 
 import com.example.myapp.dto.Product;
+import com.example.myapp.service.ExcelExportService;
 import com.example.myapp.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -17,6 +23,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final ExcelExportService excelExportService;
 
     /**
      * Get all products
@@ -133,5 +140,57 @@ public class ProductController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Export all products to Excel
+     * GET /api/products/export/excel
+     */
+    @GetMapping("/export/excel")
+    public ResponseEntity<byte[]> exportProductsToExcel() {
+        log.info("GET /api/products/export/excel - Exporting all products");
+        try {
+            List<Product> products = productService.getAllProducts();
+            byte[] excelData = excelExportService.generateProductsExcel(products);
+            
+            String filename = "products_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".xlsx";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", filename);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelData);
+        } catch (IOException e) {
+            log.error("Failed to generate Excel file", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Export in-stock products to Excel
+     * GET /api/products/export/excel/in-stock
+     */
+    @GetMapping("/export/excel/in-stock")
+    public ResponseEntity<byte[]> exportInStockProductsToExcel() {
+        log.info("GET /api/products/export/excel/in-stock - Exporting in-stock products");
+        try {
+            List<Product> products = productService.getInStockProducts();
+            byte[] excelData = excelExportService.generateProductsExcel(products);
+            
+            String filename = "products_in_stock_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".xlsx";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", filename);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelData);
+        } catch (IOException e) {
+            log.error("Failed to generate Excel file", e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

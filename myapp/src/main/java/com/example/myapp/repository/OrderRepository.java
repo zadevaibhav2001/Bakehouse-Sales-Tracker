@@ -54,4 +54,27 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
      * Count orders for a specific product
      */
     long countByProductId(Long productId);
+
+    /**
+     * Get total cost of all orders
+     */
+    @Query("SELECT SUM(o.totalCost) FROM Order o")
+    Double getTotalRevenue();
+
+    /**
+     * Get total cost for a specific product
+     */
+    @Query("SELECT SUM(o.totalCost) FROM Order o WHERE o.product.id = :productId")
+    Double getTotalRevenueByProductId(@Param("productId") Long productId);
+
+    /**
+     * Get total cost within a date range
+     */
+    @Query("SELECT SUM(o.totalCost) FROM Order o WHERE o.orderDateTime BETWEEN :startDateTime AND :endDateTime")
+    Double getTotalRevenueBetween(@Param("startDateTime") Instant startDateTime, @Param("endDateTime") Instant endDateTime);
+
+    /**
+     * Find orders with total cost greater than specified amount
+     */
+    List<Order> findByTotalCostGreaterThan(double minCost);
 }
