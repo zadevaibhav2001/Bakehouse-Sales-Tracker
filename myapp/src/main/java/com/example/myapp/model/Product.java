@@ -19,7 +19,7 @@ public class Product {
     @SequenceGenerator(name = "product_seq", sequenceName = "product_sequence", allocationSize = 1)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String name;
 
     @Column(nullable = false)

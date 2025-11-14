@@ -121,17 +121,16 @@ function showSection(sectionId) {
 // Dashboard
 async function loadDashboard() {
     try {
-        const [orders, revenue, products, inStock] = await Promise.all([
+        const today = new Date().toISOString().split('T')[0];
+        const [orders, todayRevenue, products] = await Promise.all([
             fetch(`${API_BASE}/orders`).then(r => r.json()),
-            fetch(`${API_BASE}/orders/revenue/total`).then(r => r.json()),
-            fetch(`${API_BASE}/products`).then(r => r.json()),
-            fetch(`${API_BASE}/products/in-stock`).then(r => r.json())
+            fetch(`${API_BASE}/orders/revenue/between?start=${today}T00:00:00&end=${today}T23:59:59`).then(r => r.json()),
+            fetch(`${API_BASE}/products`).then(r => r.json())
         ]);
 
         document.getElementById('totalOrders').textContent = orders.length;
-        document.getElementById('totalRevenue').textContent = `₹${revenue.totalRevenue.toFixed(2)}`;
+        document.getElementById('totalRevenue').textContent = `₹${todayRevenue.totalRevenue.toFixed(2)}`;
         document.getElementById('totalProducts').textContent = products.length;
-        document.getElementById('inStockProducts').textContent = inStock.length;
 
         displayRecentOrders(orders.slice(0, 5));
     } catch (error) {
@@ -231,6 +230,19 @@ async function addProduct(event) {
             loadProducts();
             reloadOrderMenu();
             showSuccess('Product added successfully');
+        } else if (response.status === 409) {
+            const error = await response.json();
+            Swal.fire({
+                icon: 'error',
+                title: 'Product already exists',
+                text: error.message || 'A product with this name already exists'
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed to add product',
+                text: 'An error occurred while adding the product'
+            });
         }
     } catch (error) {
         Swal.fire({
@@ -417,6 +429,34 @@ async function navigateToInStockProducts() {
     displayProducts(products);
 }
 
+function navigateToDashboard() {
+    showSection('dashboard');
+    document.querySelectorAll('.nav-menu a').forEach(l => l.classList.remove('active'));
+    document.querySelector('.nav-menu a[href="#dashboard"]').classList.add('active');
+    loadDashboard();
+}
+
+function navigateToCreateOrders() {
+    showSection('create-orders');
+    document.querySelectorAll('.nav-menu a').forEach(l => l.classList.remove('active'));
+    document.querySelector('.nav-menu a[href="#create-orders"]').classList.add('active');
+    if (!window.ordersLoaded) loadCreateOrders();
+}
+
+function navigateToTodaysReport() {
+    const today = new Date().toISOString().split('T')[0];
+    showSection('reports');
+    document.querySelectorAll('.nav-menu a').forEach(l => l.classList.remove('active'));
+    document.querySelector('.nav-menu a[href="#reports"]').classList.add('active');
+    
+    // Set today's date in both fields
+    document.getElementById('reportStartDate').value = today;
+    document.getElementById('reportEndDate').value = today;
+    
+    // Generate the report automatically
+    getRevenueReport();
+}
+
 function changeQuantity(productId, change) {
     if (!quantities[productId]) quantities[productId] = 0;
     quantities[productId] = Math.max(0, quantities[productId] + change);
@@ -585,10 +625,32 @@ async function getRevenueReport() {
         const response = await fetch(url);
         const data = await response.json();
         
+        // Also fetch orders for product breakdown
+        const ordersUrl = `${API_BASE}/orders/between?start=${startDate}T00:00:00&end=${endDate}T23:59:59`;
+        const ordersResponse = await fetch(ordersUrl);
+        const orders = await ordersResponse.json();
+        
+        // Calculate product counts
+        const productCounts = {};
+        orders.forEach(order => {
+            const productName = order.product.name;
+            if (productCounts[productName]) {
+                productCounts[productName] += order.quantity;
+            } else {
+                productCounts[productName] = order.quantity;
+            }
+        });
+        
+        const productBreakdown = Object.entries(productCounts)
+            .map(([name, count]) => `<li>${name}: ${count} units</li>`)
+            .join('');
+        
         document.getElementById('revenueResult').innerHTML = `
             <h4>Revenue Report</h4>
             <p><strong>Period:</strong> ${startDate} to ${endDate}</p>
             <p><strong>Total Revenue:</strong> <span style="color: var(--success-color); font-size: 1.5rem;">₹${data.totalRevenue.toFixed(2)}</span></p>
+            <h5 style="margin-top: 1rem;">Products Sold:</h5>
+            <ul style="margin-top: 0.5rem;">${productBreakdown || '<li>No products sold in this period</li>'}</ul>
         `;
     } catch (error) {
         Swal.fire({

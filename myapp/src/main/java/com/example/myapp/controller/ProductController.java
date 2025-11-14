@@ -90,10 +90,16 @@ public class ProductController {
      * POST /api/products
      */
     @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+    public ResponseEntity<?> createProduct(@RequestBody Product product) {
         log.info("POST /api/products - Creating product: {}", product.name());
-        Product created = productService.createProduct(product);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        try {
+            Product created = productService.createProduct(product);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (IllegalArgumentException e) {
+            log.warn("Cannot create product: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
     }
 
     /**

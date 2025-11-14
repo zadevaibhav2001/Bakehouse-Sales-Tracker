@@ -33,4 +33,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * Find products by exact name
      */
     Product findByName(String name);
+
+    /**
+     * Check if product exists by name (case-insensitive)
+     */
+    boolean existsByNameIgnoreCase(String name);
 }

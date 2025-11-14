@@ -82,6 +82,13 @@ public class ProductService {
     @Transactional
     public Product createProduct(Product productDto) {
         log.info("Creating new product: {}", productDto.name());
+        
+        // Check if product with same name already exists
+        if (productRepository.existsByNameIgnoreCase(productDto.name())) {
+            log.warn("Product with name '{}' already exists", productDto.name());
+            throw new IllegalArgumentException("Product with name '" + productDto.name() + "' already exists");
+        }
+        
         com.example.myapp.model.Product entity = productMapper.toEntity(productDto);
         com.example.myapp.model.Product saved = productRepository.save(entity);
         return productMapper.toDto(saved);
