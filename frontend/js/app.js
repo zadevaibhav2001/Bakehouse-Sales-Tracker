@@ -259,16 +259,20 @@ async function toggleStock(productId, inStock) {
 }
 
 async function deleteProduct(productId) {
-    const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: 'You want to delete this product?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    });
-    if (!result.isConfirmed) return;
+    try {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: 'You want to delete this product?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        });
+        if (!result.isConfirmed) return;
+    } catch (e) {
+        if (!confirm('Are you sure you want to delete this product?')) return;
+    }
 
     try {
         const response = await fetch(`${API_BASE}/products/${productId}`, {
@@ -409,16 +413,20 @@ async function addOrder(event) {
 }
 
 async function deleteOrder(orderId) {
-    const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: 'You want to delete this order?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    });
-    if (!result.isConfirmed) return;
+    try {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: 'You want to delete this order?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        });
+        if (!result.isConfirmed) return;
+    } catch (e) {
+        if (!confirm('Are you sure you want to delete this order?')) return;
+    }
 
     try {
         const response = await fetch(`${API_BASE}/orders/${orderId}`, {
@@ -429,6 +437,12 @@ async function deleteOrder(orderId) {
             loadOrders();
             loadDashboard();
             showSuccess('Order deleted successfully');
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed to delete order',
+                text: 'Could not delete the order'
+            });
         }
     } catch (error) {
         Swal.fire({
