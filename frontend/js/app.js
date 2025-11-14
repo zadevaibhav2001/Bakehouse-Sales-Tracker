@@ -763,6 +763,7 @@ function showSuccess(message) {
     Swal.fire({
         icon: 'success',
         text: message,
+        toast: true,
         position: 'top-end',
         timer: 1000,
         showConfirmButton: false,
