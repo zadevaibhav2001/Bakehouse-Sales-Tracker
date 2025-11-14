@@ -78,6 +78,15 @@ function initMobileMenu() {
             }
         });
         
+        // Close menu when clicking on the menu itself (close button area at top)
+        navMenu.addEventListener('click', (e) => {
+            // Check if click is in the top 60px (close button area)
+            const rect = navMenu.getBoundingClientRect();
+            if (e.clientY - rect.top < 60 && e.clientX > rect.right - 100) {
+                closeMenu();
+            }
+        });
+        
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
             if (navMenu.classList.contains('active') && 
