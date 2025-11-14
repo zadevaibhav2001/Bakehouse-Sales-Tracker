@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setDefaultDates();
     loadDashboard();
     loadProducts();
-    loadOrders();
+    loadCreateOrders();
 });
 
 // Set today's date as default for all date inputs
@@ -111,10 +111,11 @@ function showSection(sectionId) {
     });
     document.getElementById(sectionId).classList.add('active');
     
-    // Reload data when switching sections
+    // Only reload data if not already loaded
     if (sectionId === 'dashboard') loadDashboard();
     if (sectionId === 'products') loadProducts();
-    if (sectionId === 'orders') loadOrders();
+    if (sectionId === 'create-orders' && !window.ordersLoaded) loadCreateOrders();
+    if (sectionId === 'order-history') loadOrderHistory();
 }
 
 // Dashboard
@@ -228,6 +229,7 @@ async function addProduct(event) {
             closeModal('addProductModal');
             form.reset();
             loadProducts();
+            reloadOrderMenu();
             showSuccess('Product added successfully');
         }
     } catch (error) {
@@ -247,6 +249,7 @@ async function toggleStock(productId, inStock) {
 
         if (response.ok) {
             loadProducts();
+            reloadOrderMenu();
             showSuccess('Stock status updated');
         }
     } catch (error) {
@@ -281,6 +284,7 @@ async function deleteProduct(productId) {
 
         if (response.ok) {
             loadProducts();
+            reloadOrderMenu();
             showSuccess('Product deleted successfully');
         } else if (response.status === 409) {
             // Conflict - product has existing orders
@@ -316,22 +320,135 @@ function exportProducts() {
     window.open(`${API_BASE}/products/export/excel`, '_blank');
 }
 
-// Orders
-async function loadOrders() {
+// Create Orders
+async function loadCreateOrders() {
     try {
-        const response = await fetch(`${API_BASE}/orders/recent`);
-        const orders = await response.json();
-        displayOrders(orders);
-        
-        // Load products for order form
         const productsResponse = await fetch(`${API_BASE}/products/in-stock`);
         const products = await productsResponse.json();
-        populateProductSelect(products);
+        
+        displayOrderProducts(products);
+        window.ordersLoaded = true;
     } catch (error) {
         Swal.fire({
             icon: 'error',
-            title: 'Error loading orders',
-            text: 'Failed to load orders'
+            title: 'Error loading products',
+            text: 'Failed to load products for ordering'
+        });
+    }
+}
+
+// Order History
+async function loadOrderHistory() {
+    try {
+        const ordersResponse = await fetch(`${API_BASE}/orders/recent`);
+        const orders = await ordersResponse.json();
+        
+        displayOrders(orders);
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error loading order history',
+            text: 'Failed to load order history'
+        });
+    }
+}
+
+function displayOrderProducts(products) {
+    const container = document.getElementById('orderProductsList');
+    if (products.length === 0) {
+        container.innerHTML = '<p>No products available</p>';
+        return;
+    }
+
+    container.innerHTML = products.map(product => `
+        <div class="order-product-item">
+            <div class="product-info">
+                <h4>${product.name}</h4>
+                <p>₹${product.price.toFixed(2)} each</p>
+            </div>
+            <div class="quantity-controls">
+                <button class="quantity-btn" onclick="changeQuantity(${product.id}, -1)">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <span class="quantity-display" id="qty-${product.id}">0</span>
+                <button class="quantity-btn" onclick="changeQuantity(${product.id}, 1)">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="add-order-btn" id="add-btn-${product.id}" onclick="createOrder(${product.id})" disabled>
+                    Add
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+let quantities = {};
+
+function reloadOrderMenu() {
+    window.ordersLoaded = false;
+    if (document.getElementById('create-orders').classList.contains('active')) {
+        loadCreateOrders();
+    }
+}
+
+function navigateToOrderHistory() {
+    showSection('order-history');
+    document.querySelectorAll('.nav-menu a').forEach(l => l.classList.remove('active'));
+    document.querySelector('.nav-menu a[href="#order-history"]').classList.add('active');
+    loadOrderHistory();
+}
+
+function navigateToProducts() {
+    showSection('products');
+    document.querySelectorAll('.nav-menu a').forEach(l => l.classList.remove('active'));
+    document.querySelector('.nav-menu a[href="#products"]').classList.add('active');
+    loadProducts();
+}
+
+async function navigateToInStockProducts() {
+    showSection('products');
+    document.querySelectorAll('.nav-menu a').forEach(l => l.classList.remove('active'));
+    document.querySelector('.nav-menu a[href="#products"]').classList.add('active');
+    
+    // Set filter to in stock and load filtered products
+    document.getElementById('stockFilter').value = 'inStock';
+    const response = await fetch(`${API_BASE}/products/in-stock`);
+    const products = await response.json();
+    displayProducts(products);
+}
+
+function changeQuantity(productId, change) {
+    if (!quantities[productId]) quantities[productId] = 0;
+    quantities[productId] = Math.max(0, quantities[productId] + change);
+    
+    document.getElementById(`qty-${productId}`).textContent = quantities[productId];
+    document.getElementById(`add-btn-${productId}`).disabled = quantities[productId] === 0;
+}
+
+async function createOrder(productId) {
+    const quantity = quantities[productId];
+    if (!quantity || quantity <= 0) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/orders/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId, quantity })
+        });
+
+        if (response.ok) {
+            quantities[productId] = 0;
+            document.getElementById(`qty-${productId}`).textContent = '0';
+            document.getElementById(`add-btn-${productId}`).disabled = true;
+            loadOrderHistory();
+            loadDashboard();
+            showSuccess('Order created successfully');
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error creating order',
+            text: 'Failed to create order'
         });
     }
 }
@@ -373,44 +490,9 @@ function displayOrders(orders) {
     `;
 }
 
-function populateProductSelect(products) {
-    const select = document.getElementById('orderProductSelect');
-    select.innerHTML = '<option value="">Select a product</option>' +
-        products.map(p => `<option value="${p.id}">${p.name} - ₹${p.price.toFixed(2)}</option>`).join('');
-}
 
-async function addOrder(event) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-    
-    const order = {
-        productId: parseInt(formData.get('productId')),
-        quantity: parseInt(formData.get('quantity'))
-    };
 
-    try {
-        const response = await fetch(`${API_BASE}/orders/create`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(order)
-        });
 
-        if (response.ok) {
-            closeModal('addOrderModal');
-            form.reset();
-            loadOrders();
-            loadDashboard();
-            showSuccess('Order created successfully');
-        }
-    } catch (error) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error creating order',
-            text: 'Failed to create order'
-        });
-    }
-}
 
 async function deleteOrder(orderId) {
     try {
@@ -434,7 +516,7 @@ async function deleteOrder(orderId) {
         });
 
         if (response.ok) {
-            loadOrders();
+            loadOrderHistory();
             loadDashboard();
             showSuccess('Order deleted successfully');
         } else {
@@ -564,16 +646,7 @@ function showAddProductModal() {
     document.getElementById('addProductModal').classList.add('active');
 }
 
-function showAddOrderModal() {
-    document.getElementById('addOrderModal').classList.add('active');
-    populateQuantitySelect();
-}
 
-function populateQuantitySelect() {
-    const select = document.getElementById('quantitySelect');
-    select.innerHTML = '<option value="">Select quantity</option>' +
-        Array.from({length: 20}, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
-}
 
 function closeModal(modalId) {
     document.getElementById(modalId).classList.remove('active');
