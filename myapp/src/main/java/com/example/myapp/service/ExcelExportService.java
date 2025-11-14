@@ -161,7 +161,7 @@ public class ExcelExportService {
     private CellStyle createCurrencyStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         DataFormat format = workbook.createDataFormat();
-        style.setDataFormat(format.getFormat("$#,##0.00"));
+        style.setDataFormat(format.getFormat("₹#,##0.00"));
         return style;
     }
 

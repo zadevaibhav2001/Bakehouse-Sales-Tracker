@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Bakehouse - Sales Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <img src="images/logo.png" alt="The Bake House Logo" class="logo-img">
+                <h1>The Bake House</h1>
+            </div>
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#dashboard" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="#products"><i class="fas fa-box"></i> Products</a></li>
+                <li><a href="#orders"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                <li><a href="#reports"><i class="fas fa-file-alt"></i> Reports</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <h2>Sales Dashboard</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalOrders">0</h3>
+                        <p>Total Orders</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalRevenue">₹0.00</h3>
+                        <p>Total Revenue</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalProducts">0</h3>
+                        <p>Products</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="inStockProducts">0</h3>
+                        <p>In Stock</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-orders">
+                <h3>Recent Orders</h3>
+                <div id="recentOrdersList" class="orders-list"></div>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section id="products" class="section">
+            <div class="section-header">
+                <h2>Products</h2>
+                <button class="btn btn-primary" onclick="showAddProductModal()">
+                    <i class="fas fa-plus"></i> Add Product
+                </button>
+            </div>
+
+            <div class="filters">
+                <input type="text" id="productSearch" placeholder="Search products..." class="search-input">
+                <select id="stockFilter" class="filter-select">
+                    <option value="all">All Products</option>
+                    <option value="inStock">In Stock</option>
+                    <option value="outOfStock">Out of Stock</option>
+                </select>
+                <button class="btn btn-secondary" onclick="exportProducts()">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </button>
+            </div>
+
+            <div id="productsList" class="products-grid"></div>
+        </section>
+
+        <!-- Orders Section -->
+        <section id="orders" class="section">
+            <div class="section-header">
+                <h2>Orders</h2>
+                <button class="btn btn-primary" onclick="showAddOrderModal()">
+                    <i class="fas fa-plus"></i> New Order
+                </button>
+            </div>
+
+            <div class="filters">
+                <input type="date" id="startDate" class="date-input">
+                <input type="date" id="endDate" class="date-input">
+                <button class="btn btn-secondary" onclick="filterOrders()">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <button class="btn btn-secondary" onclick="exportOrders()">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </button>
+            </div>
+
+            <div id="ordersList" class="table-container"></div>
+        </section>
+
+        <!-- Reports Section -->
+        <section id="reports" class="section">
+            <h2>Sales Reports</h2>
+            
+            <div class="report-cards">
+                <div class="report-card">
+                    <h3>Revenue by Date Range</h3>
+                    <div class="report-form">
+                        <input type="date" id="reportStartDate" class="date-input">
+                        <input type="date" id="reportEndDate" class="date-input">
+                        <button class="btn btn-primary" onclick="getRevenueReport()">Generate</button>
+                    </div>
+                    <div id="revenueResult" class="report-result"></div>
+                </div>
+
+                <div class="report-card">
+                    <h3>High Value Orders</h3>
+                    <div class="report-form">
+                        <input type="number" id="minCost" placeholder="Minimum cost" class="input">
+                        <button class="btn btn-primary" onclick="getHighValueOrders()">Search</button>
+                    </div>
+                    <div id="highValueResult" class="report-result"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addProductModal')">&times;</span>
+            <h2>Add New Product</h2>
+            <form id="addProductForm" onsubmit="addProduct(event)">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" name="name" required class="input">
+                </div>
+                <div class="form-group">
+                    <label>Price (₹)</label>
+                    <input type="number" name="price" step="0.01" required class="input">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="inStock" checked>
+                        In Stock
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Product</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Order Modal -->
+    <div id="addOrderModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addOrderModal')">&times;</span>
+            <h2>Create New Order</h2>
+            <form id="addOrderForm" onsubmit="addOrder(event)">
+                <div class="form-group">
+                    <label>Product</label>
+                    <select name="productId" id="orderProductSelect" required class="input">
+                        <option value="">Select a product</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" name="quantity" min="1" required class="input">
+                </div>
+                <button type="submit" class="btn btn-primary">Create Order</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

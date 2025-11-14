@@ -1,14 +1,16 @@
 server:
   port: 8080
-  address: 127.0.0.1  # Bind to localhost only (Nginx will proxy)
+  address: 0.0.0.0  # Bind to all interfaces for local development
 
 spring:
   application:
     name: myapp
 
   datasource:
-    url: jdbc:sqlite:myapp.db
-    driver-class-name: org.sqlite.JDBC
+    url: jdbc:h2:file:./data/myapp
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
     
     hikari:
       maximum-pool-size: 5
@@ -19,17 +21,21 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update  # SQLite will auto-create tables
+      ddl-auto: update  # H2 will auto-create tables
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.community.dialect.SQLiteDialect
+        dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
         jdbc:
           batch_size: 5
         order_inserts: true
         order_updates: true
     open-in-view: false
+  
+  h2:
+    console:
+      enabled: false  # Disable H2 console for security
 
 # Actuator endpoints
 management:

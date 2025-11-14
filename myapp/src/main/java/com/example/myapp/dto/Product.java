@@ -1,4 +1,13 @@
 package com.example.myapp.dto;
 
-public record Product(String name, double price, boolean inStock) {
+import java.time.Instant;
+
+public record Product(
+    Long id,
+    String name,
+    double price,
+    boolean inStock,
+    Instant createdAt,
+    Instant updatedAt
+) {
 }

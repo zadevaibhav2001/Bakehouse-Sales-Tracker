@@ -14,9 +14,12 @@ public class ProductMapper {
             return null;
         }
         return new Product(
+            entity.getId(),
             entity.getName(),
             entity.getPrice(),
-            entity.isInStock()
+            entity.isInStock(),
+            entity.getCreatedAt(),
+            entity.getUpdatedAt()
         );
     }
 
