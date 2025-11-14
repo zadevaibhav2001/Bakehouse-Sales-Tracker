@@ -165,12 +165,30 @@ public class OrderService {
      */
     @Transactional
     public boolean deleteOrder(UUID orderId) {
-        log.info("Deleting order with id: {}", orderId);
-        if (orderRepository.existsById(orderId)) {
-            orderRepository.deleteById(orderId);
-            return true;
-        }
-        return false;
+        return deleteOrder(orderId, false);
+    }
+
+    /**
+     * Delete order with force flag
+     */
+    @Transactional
+    public boolean deleteOrder(UUID orderId, boolean forceDelete) {
+        log.info("Deleting order with id: {}, forceDelete: {}", orderId, forceDelete);
+        
+        return orderRepository.findById(orderId)
+            .map(order -> {
+                if (!forceDelete) {
+                    Instant oneHourAgo = Instant.now().minusSeconds(3600);
+                    if (order.getCreatedAt().isAfter(oneHourAgo)) {
+                        log.warn("Cannot delete order {} - created less than 1 hour ago", orderId);
+                        throw new IllegalStateException("Cannot delete order created less than 1 hour ago");
+                    }
+                }
+                orderRepository.deleteById(orderId);
+                log.info("Order {} deleted successfully", orderId);
+                return true;
+            })
+            .orElse(false);
     }
 
     /**

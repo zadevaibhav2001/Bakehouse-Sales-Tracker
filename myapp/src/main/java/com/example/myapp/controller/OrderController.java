@@ -166,16 +166,24 @@ public class OrderController {
 
     /**
      * Delete order
-     * DELETE /api/orders/{orderId}
+     * DELETE /api/orders/{orderId}?forceDelete=true
      */
     @DeleteMapping("/{orderId}")
-    public ResponseEntity<Void> deleteOrder(@PathVariable UUID orderId) {
-        log.info("DELETE /api/orders/{}", orderId);
-        boolean deleted = orderService.deleteOrder(orderId);
-        if (!deleted) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> deleteOrder(
+            @PathVariable UUID orderId,
+            @RequestParam(defaultValue = "false") boolean forceDelete) {
+        log.info("DELETE /api/orders/{}?forceDelete={}", orderId, forceDelete);
+        try {
+            boolean deleted = orderService.deleteOrder(orderId, forceDelete);
+            if (!deleted) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            log.warn("Order deletion blocked: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", e.getMessage()));
         }
-        return ResponseEntity.noContent().build();
     }
 
     /**
