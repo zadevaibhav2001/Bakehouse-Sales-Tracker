@@ -123,21 +123,28 @@ public class OrderController {
      * Body: { "productId": 1, "quantity": 5 }
      */
     @PostMapping("/create")
-    public ResponseEntity<Order> createOrderWithProductId(
+    public ResponseEntity<?> createOrderWithProductId(
             @RequestBody Map<String, Object> request) {
-        log.info("POST /api/orders/create - Creating order with product ID");
+        log.info("POST /api/orders/create - Creating order with product ID: {}", request);
         try {
+            if (!request.containsKey("productId") || !request.containsKey("quantity")) {
+                log.error("Missing required fields: productId or quantity");
+                return ResponseEntity.badRequest().body(Map.of("error", "Missing required fields: productId and quantity"));
+            }
+            
             Long productId = Long.valueOf(request.get("productId").toString());
             int quantity = Integer.parseInt(request.get("quantity").toString());
             
+            log.info("Creating order for productId: {} with quantity: {}", productId, quantity);
             Order created = orderService.createOrderWithProductId(productId, quantity);
+            log.info("Order created successfully: {}", created.orderId());
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {
             log.error("Failed to create order: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            log.error("Invalid request format", e);
-            return ResponseEntity.badRequest().build();
+            log.error("Invalid request format or internal error", e);
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid request format: " + e.getMessage()));
         }
     }
 

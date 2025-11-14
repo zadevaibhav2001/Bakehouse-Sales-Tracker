@@ -65,78 +65,55 @@ echo ""
 sleep 2
 
 # ---------------------------------------
-# Create Sample Orders (using new product IDs 1–10)
+# Get Product IDs and Create Sample Orders
 # ---------------------------------------
 
 echo "🛒 Creating Orders..."
 
-# Order 1: Korean Buns × 5
-curl -X POST "$API_BASE/orders/create" \
-  -H "Content-Type: application/json" \
-  -d '{"productId":1,"quantity":5}' && echo ""
+# Get all products and extract IDs
+PRODUCTS_JSON=$(curl -s "$API_BASE/products")
 
-sleep 1
+# Extract product IDs using basic parsing
+PRODUCT_IDS=($(echo "$PRODUCTS_JSON" | grep -o '"id":[0-9]*' | cut -d':' -f2))
 
-# Order 2: Cheesecake Slice × 3
-curl -X POST "$API_BASE/orders/create" \
-  -H "Content-Type: application/json" \
-  -d '{"productId":2,"quantity":3}' && echo ""
+echo "Found ${#PRODUCT_IDS[@]} products with IDs: ${PRODUCT_IDS[@]}"
 
-sleep 1
+# Create orders using actual product IDs
+if [ ${#PRODUCT_IDS[@]} -ge 1 ]; then
+    # Order 1: First product × 5
+    curl -X POST "$API_BASE/orders/create" \
+      -H "Content-Type: application/json" \
+      -d "{\"productId\":${PRODUCT_IDS[0]},\"quantity\":5}" && echo ""
+fi
 
-# Order 3: Brownies × 4
-curl -X POST "$API_BASE/orders/create" \
-  -H "Content-Type: application/json" \
-  -d '{"productId":3,"quantity":4}' && echo ""
 
-sleep 1
+if [ ${#PRODUCT_IDS[@]} -ge 2 ]; then
+    sleep 1
+    curl -X POST "$API_BASE/orders/create" \
+      -H "Content-Type: application/json" \
+      -d "{\"productId\":${PRODUCT_IDS[1]},\"quantity\":3}" && echo ""
+fi
 
-# Order 4: Pastry × 6
-curl -X POST "$API_BASE/orders/create" \
-  -H "Content-Type: application/json" \
-  -d '{"productId":4,"quantity":6}' && echo ""
+if [ ${#PRODUCT_IDS[@]} -ge 3 ]; then
+    sleep 1
+    curl -X POST "$API_BASE/orders/create" \
+      -H "Content-Type: application/json" \
+      -d "{\"productId\":${PRODUCT_IDS[2]},\"quantity\":4}" && echo ""
+fi
 
-sleep 1
+if [ ${#PRODUCT_IDS[@]} -ge 4 ]; then
+    sleep 1
+    curl -X POST "$API_BASE/orders/create" \
+      -H "Content-Type: application/json" \
+      -d "{\"productId\":${PRODUCT_IDS[3]},\"quantity\":6}" && echo ""
+fi
 
-# Order 5: Cake Pops × 10
-curl -X POST "$API_BASE/orders/create" \
-  -H "Content-Type: application/json" \
-  -d '{"productId":5,"quantity":10}' && echo ""
-
-sleep 1
-
-# Order 6: Nankhatai × 8
-curl -X POST "$API_BASE/orders/create" \
-  -H "Content-Type: application/json" \
-  -d '{"productId":6,"quantity":8}' && echo ""
-
-sleep 1
-
-# Order 7: Chocolate Chip Cookie 250gm × 2
-curl -X POST "$API_BASE/orders/create" \
-  -H "Content-Type: application/json" \
-  -d '{"productId":7,"quantity":2}' && echo ""
-
-sleep 1
-
-# Order 8: Chocolate Chip Cookie (piece) × 12
-curl -X POST "$API_BASE/orders/create" \
-  -H "Content-Type: application/json" \
-  -d '{"productId":8,"quantity":12}' && echo ""
-
-sleep 1
-
-# Order 9: Jars × 5
-curl -X POST "$API_BASE/orders/create" \
-  -H "Content-Type: application/json" \
-  -d '{"productId":9,"quantity":5}' && echo ""
-
-sleep 1
-
-# Order 10: Oreo Jar × 7
-curl -X POST "$API_BASE/orders/create" \
-  -H "Content-Type: application/json" \
-  -d '{"productId":10,"quantity":7}' && echo ""
+if [ ${#PRODUCT_IDS[@]} -ge 5 ]; then
+    sleep 1
+    curl -X POST "$API_BASE/orders/create" \
+      -H "Content-Type: application/json" \
+      -d "{\"productId\":${PRODUCT_IDS[4]},\"quantity\":10}" && echo ""
+fi
 
 echo ""
 echo "✅ Orders created!"

@@ -120,8 +120,14 @@ public class OrderService {
     public Order createOrderWithProductId(Long productId, int quantity) {
         log.info("Creating new order for product ID: {} with quantity: {}", productId, quantity);
         
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+        
         com.example.myapp.model.Product product = productRepository.findById(productId)
             .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + productId));
+        
+        log.info("Found product: {} with price: {}", product.getName(), product.getPrice());
 
         com.example.myapp.model.Order entity = new com.example.myapp.model.Order();
         entity.setOrderId(UUID.randomUUID());
@@ -129,9 +135,14 @@ public class OrderService {
         entity.setQuantity(quantity);
         entity.setTotalCost(quantity * product.getPrice());
         entity.setOrderDateTime(Instant.now());
-
+        
+        log.info("Saving order with totalCost: {}", entity.getTotalCost());
         com.example.myapp.model.Order saved = orderRepository.save(entity);
-        return orderMapper.toDto(saved);
+        log.info("Order saved with ID: {}", saved.getOrderId());
+        
+        Order dto = orderMapper.toDto(saved);
+        log.info("Returning order DTO: {}", dto);
+        return dto;
     }
 
     /**
