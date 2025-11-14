@@ -493,6 +493,13 @@ async function createOrder(productId) {
     }
 }
 
+// Helper function to check if order can be deleted (older than 1 hour)
+function isOrderDeletable(orderDateTime) {
+    const orderTime = new Date(orderDateTime);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    return orderTime < oneHourAgo;
+}
+
 function displayOrders(orders) {
     const container = document.getElementById('ordersList');
     if (orders.length === 0) {
@@ -512,19 +519,24 @@ function displayOrders(orders) {
                 </tr>
             </thead>
             <tbody>
-                ${orders.map(order => `
-                    <tr>
-                        <td>${order.product.name}</td>
-                        <td>${order.quantity}</td>
-                        <td>₹${order.totalCost.toFixed(2)}</td>
-                        <td>${formatDate(order.orderDateTime)}</td>
-                        <td>
-                            <button class="btn btn-danger" onclick="deleteOrder('${order.orderId}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('')}
+                ${orders.map(order => {
+                    const isDeletable = isOrderDeletable(order.orderDateTime);
+                    return `
+                        <tr>
+                            <td>${order.product.name}</td>
+                            <td>${order.quantity}</td>
+                            <td>₹${order.totalCost.toFixed(2)}</td>
+                            <td>${formatDate(order.orderDateTime)}</td>
+                            <td>
+                                <button class="btn btn-danger" 
+                                        onclick="deleteOrder('${order.orderId}', '${order.orderDateTime}')" 
+                                        ${!isDeletable ? 'disabled title="Cannot delete orders created within 1 hour"' : ''}>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('')}
             </tbody>
         </table>
     `;
@@ -534,7 +546,18 @@ function displayOrders(orders) {
 
 
 
-async function deleteOrder(orderId) {
+async function deleteOrder(orderId, orderDateTime) {
+    // Client-side validation - check if order is within 1 hour
+    if (!isOrderDeletable(orderDateTime)) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Cannot Delete Order',
+            text: 'Orders can only be deleted after 1 hour of creation',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+
     try {
         const result = await Swal.fire({
             title: 'Are you sure?',
@@ -559,6 +582,13 @@ async function deleteOrder(orderId) {
             loadOrderHistory();
             loadDashboard();
             showSuccess('Order deleted successfully');
+        } else if (response.status === 403) {
+            const error = await response.json();
+            Swal.fire({
+                icon: 'error',
+                title: 'Cannot Delete Order',
+                text: error.error || 'Orders can only be deleted after 1 hour of creation'
+            });
         } else {
             Swal.fire({
                 icon: 'error',
