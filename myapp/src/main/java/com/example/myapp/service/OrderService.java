@@ -127,6 +127,7 @@ public class OrderService {
         entity.setOrderId(UUID.randomUUID());
         entity.setProduct(product);
         entity.setQuantity(quantity);
+        entity.setTotalCost(quantity * product.getPrice());
         entity.setOrderDateTime(Instant.now());
 
         com.example.myapp.model.Order saved = orderRepository.save(entity);
