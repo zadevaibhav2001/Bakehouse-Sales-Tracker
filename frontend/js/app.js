@@ -45,8 +45,12 @@ function initNavigation() {
             link.classList.add('active');
             
             // Close mobile menu after clicking
-            if (navMenu) {
+            if (navMenu && navMenu.classList.contains('active')) {
+                const toggle = document.getElementById('mobileMenuToggle');
                 navMenu.classList.remove('active');
+                if (toggle) {
+                    toggle.querySelector('i').className = 'fas fa-bars';
+                }
             }
         });
     });
@@ -78,21 +82,20 @@ function initMobileMenu() {
             }
         });
         
-        // Close menu when clicking on the menu itself (close button area at top)
-        navMenu.addEventListener('click', (e) => {
-            // Check if click is in the top 60px (close button area)
-            const rect = navMenu.getBoundingClientRect();
-            if (e.clientY - rect.top < 60 && e.clientX > rect.right - 100) {
-                closeMenu();
-            }
-        });
-        
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (navMenu.classList.contains('active') && 
-                !toggle.contains(e.target) && 
-                !navMenu.contains(e.target)) {
-                closeMenu();
+        // Close menu when clicking outside the visible menu area
+        document.addEventListener('mousedown', (e) => {
+            if (navMenu.classList.contains('active')) {
+                const rect = navMenu.getBoundingClientRect();
+                const clickX = e.clientX;
+                const clickY = e.clientY;
+                
+                // Check if click is outside the visible menu area (280px wide from right edge)
+                const isOutsideMenu = clickX < (window.innerWidth - 280);
+                const isNotToggle = !toggle.contains(e.target);
+                
+                if (isOutsideMenu && isNotToggle) {
+                    closeMenu();
+                }
             }
         });
         
