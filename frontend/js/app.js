@@ -763,9 +763,8 @@ function showSuccess(message) {
     Swal.fire({
         icon: 'success',
         text: message,
-        toast: true,
         position: 'top-end',
-        timer: 500,
+        timer: 1000,
         showConfirmButton: false,
         timerProgressBar: true
     });
