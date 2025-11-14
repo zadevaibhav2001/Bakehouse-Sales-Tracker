@@ -566,6 +566,13 @@ function showAddProductModal() {
 
 function showAddOrderModal() {
     document.getElementById('addOrderModal').classList.add('active');
+    populateQuantitySelect();
+}
+
+function populateQuantitySelect() {
+    const select = document.getElementById('quantitySelect');
+    select.innerHTML = '<option value="">Select quantity</option>' +
+        Array.from({length: 20}, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
 }
 
 function closeModal(modalId) {
