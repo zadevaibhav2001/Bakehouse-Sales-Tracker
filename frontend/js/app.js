@@ -493,11 +493,13 @@ async function createOrder(productId) {
     }
 }
 
-// Helper function to check if order can be deleted (older than 1 hour)
+// Helper function to check if order can be deleted (within 1 hour)
 function isOrderDeletable(orderDateTime) {
     const orderTime = new Date(orderDateTime);
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    return orderTime < oneHourAgo;
+    // Return true if order is within 1 hour (deletable)
+    // Return false if order is older than 1 hour (not deletable)
+    return orderTime > oneHourAgo;
 }
 
 function displayOrders(orders) {
@@ -530,7 +532,7 @@ function displayOrders(orders) {
                             <td>
                                 <button class="btn btn-danger" 
                                         onclick="deleteOrder('${order.orderId}', '${order.orderDateTime}')" 
-                                        ${isDeletable ? '' : 'disabled title="Cannot delete orders created within 1 hour"'}>
+                                        ${isDeletable ? '' : 'disabled title="Cannot delete orders older than 1 hour"'}>
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
@@ -550,15 +552,15 @@ async function deleteOrder(orderId, orderDateTime) {
     // Client-side validation - check if order is within 1 hour
     if (!isOrderDeletable(orderDateTime)) {
         const orderTime = new Date(orderDateTime);
-        const timeRemaining = Math.ceil((orderTime.getTime() + 60 * 60 * 1000 - Date.now()) / (1000 * 60));
+        const hoursAgo = Math.floor((Date.now() - orderTime.getTime()) / (1000 * 60 * 60));
         
         Swal.fire({
             icon: 'info',
             title: 'Order Deletion Restricted',
-            html: `This order was placed less than 1 hour ago and cannot be deleted yet.<br><br>
+            html: `This order was placed more than 1 hour ago and can no longer be deleted.<br><br>
                    <strong>Order placed:</strong> ${formatDate(orderDateTime)}<br>
-                   <strong>Deletion available in:</strong> ${timeRemaining} minute(s)<br><br>
-                   <small>This policy helps prevent accidental deletions of recent orders.</small>`,
+                   <strong>Time elapsed:</strong> ${hoursAgo} hour(s) ago<br><br>
+                   <small>Orders can only be deleted within 1 hour of creation.</small>`,
             confirmButtonText: 'Understood',
             confirmButtonColor: '#3085d6'
         });
@@ -594,7 +596,7 @@ async function deleteOrder(orderId, orderDateTime) {
             Swal.fire({
                 icon: 'error',
                 title: 'Cannot Delete Order',
-                text: error.error || 'Orders can only be deleted after 1 hour of creation'
+                text: error.error || 'Orders can only be deleted within 1 hour of creation'
             });
         } else {
             Swal.fire({
@@ -760,10 +762,12 @@ function formatDate(dateString) {
 function showSuccess(message) {
     Swal.fire({
         icon: 'success',
-        title: 'Success!',
         text: message,
-        timer: 2000,
-        showConfirmButton: false
+        toast: true,
+        position: 'top-end',
+        timer: 500,
+        showConfirmButton: false,
+        timerProgressBar: true
     });
 }
 

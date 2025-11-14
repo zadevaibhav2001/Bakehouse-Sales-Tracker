@@ -179,9 +179,9 @@ public class OrderService {
             .map(order -> {
                 if (!forceDelete) {
                     Instant oneHourAgo = Instant.now().minusSeconds(3600);
-                    if (order.getCreatedAt().isAfter(oneHourAgo)) {
-                        log.warn("Cannot delete order {} - created less than 1 hour ago", orderId);
-                        throw new IllegalStateException("Cannot delete order created less than 1 hour ago");
+                    if (order.getCreatedAt().isBefore(oneHourAgo)) {
+                        log.warn("Cannot delete order {} - created more than 1 hour ago", orderId);
+                        throw new IllegalStateException("Cannot delete order created more than 1 hour ago");
                     }
                 }
                 orderRepository.deleteById(orderId);
