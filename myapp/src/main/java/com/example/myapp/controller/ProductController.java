@@ -3,8 +3,6 @@ package com.example.myapp.controller;
 import com.example.myapp.dto.Product;
 import com.example.myapp.service.ExcelExportService;
 import com.example.myapp.service.ProductService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,12 +16,15 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
-@RequiredArgsConstructor
-@Slf4j
 public class ProductController {
 
     private final ProductService productService;
     private final ExcelExportService excelExportService;
+
+    public ProductController(ProductService productService, ExcelExportService excelExportService) {
+        this.productService = productService;
+        this.excelExportService = excelExportService;
+    }
 
     /**
      * Get all products
@@ -31,7 +32,7 @@ public class ProductController {
      */
     @GetMapping
     public ResponseEntity<List<Product>> getAllProducts() {
-        log.info("GET /api/products - Fetching all products");
+        // log.info("GET /api/products - Fetching all products");
         List<Product> products = productService.getAllProducts();
         return ResponseEntity.ok(products);
     }
@@ -42,7 +43,7 @@ public class ProductController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        log.info("GET /api/products/{} - Fetching product", id);
+        // log.info("GET /api/products/{} - Fetching product", id);
         Product product = productService.getProductById(id);
         if (product == null) {
             return ResponseEntity.notFound().build();
@@ -56,7 +57,7 @@ public class ProductController {
      */
     @GetMapping("/in-stock")
     public ResponseEntity<List<Product>> getInStockProducts() {
-        log.info("GET /api/products/in-stock - Fetching in-stock products");
+        // log.info("GET /api/products/in-stock - Fetching in-stock products");
         List<Product> products = productService.getInStockProducts();
         return ResponseEntity.ok(products);
     }
@@ -67,7 +68,7 @@ public class ProductController {
      */
     @GetMapping("/search")
     public ResponseEntity<List<Product>> searchProducts(@RequestParam String name) {
-        log.info("GET /api/products/search?name={}", name);
+        // log.info("GET /api/products/search?name={}", name);
         List<Product> products = productService.searchProductsByName(name);
         return ResponseEntity.ok(products);
     }
@@ -80,7 +81,7 @@ public class ProductController {
     public ResponseEntity<List<Product>> getProductsByPriceRange(
             @RequestParam double min,
             @RequestParam double max) {
-        log.info("GET /api/products/price-range?min={}&max={}", min, max);
+        // log.info("GET /api/products/price-range?min={}&max={}", min, max);
         List<Product> products = productService.getProductsByPriceRange(min, max);
         return ResponseEntity.ok(products);
     }
@@ -91,12 +92,12 @@ public class ProductController {
      */
     @PostMapping
     public ResponseEntity<?> createProduct(@RequestBody Product product) {
-        log.info("POST /api/products - Creating product: {}", product.name());
+        // log.info("POST /api/products - Creating product: {}", product.name());
         try {
             Product created = productService.createProduct(product);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {
-            log.warn("Cannot create product: {}", e.getMessage());
+            // log.warn("Cannot create product: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new ErrorResponse(e.getMessage()));
         }
@@ -110,7 +111,7 @@ public class ProductController {
     public ResponseEntity<Product> updateProduct(
             @PathVariable Long id,
             @RequestBody Product product) {
-        log.info("PUT /api/products/{} - Updating product", id);
+        // log.info("PUT /api/products/{} - Updating product", id);
         Product updated = productService.updateProduct(id, product);
         if (updated == null) {
             return ResponseEntity.notFound().build();
@@ -126,7 +127,7 @@ public class ProductController {
     public ResponseEntity<Product> updateStockStatus(
             @PathVariable Long id,
             @RequestParam boolean inStock) {
-        log.info("PATCH /api/products/{}/stock?inStock={}", id, inStock);
+        // log.info("PATCH /api/products/{}/stock?inStock={}", id, inStock);
         Product updated = productService.updateStockStatus(id, inStock);
         if (updated == null) {
             return ResponseEntity.notFound().build();
@@ -140,7 +141,7 @@ public class ProductController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
-        log.info("DELETE /api/products/{}", id);
+        // log.info("DELETE /api/products/{}", id);
         try {
             boolean deleted = productService.deleteProduct(id);
             if (!deleted) {
@@ -148,7 +149,7 @@ public class ProductController {
             }
             return ResponseEntity.noContent().build();
         } catch (IllegalStateException e) {
-            log.warn("Cannot delete product {}: {}", id, e.getMessage());
+            // log.warn("Cannot delete product {}: {}", id, e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new ErrorResponse(e.getMessage()));
         }
@@ -165,7 +166,7 @@ public class ProductController {
      */
     @GetMapping("/export/excel")
     public ResponseEntity<byte[]> exportProductsToExcel() {
-        log.info("GET /api/products/export/excel - Exporting all products");
+        // log.info("GET /api/products/export/excel - Exporting all products");
         try {
             List<Product> products = productService.getAllProducts();
             byte[] excelData = excelExportService.generateProductsExcel(products);
@@ -180,7 +181,7 @@ public class ProductController {
                     .headers(headers)
                     .body(excelData);
         } catch (IOException e) {
-            log.error("Failed to generate Excel file", e);
+            // log.error("Failed to generate Excel file", e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -191,7 +192,7 @@ public class ProductController {
      */
     @GetMapping("/export/excel/in-stock")
     public ResponseEntity<byte[]> exportInStockProductsToExcel() {
-        log.info("GET /api/products/export/excel/in-stock - Exporting in-stock products");
+        // log.info("GET /api/products/export/excel/in-stock - Exporting in-stock products");
         try {
             List<Product> products = productService.getInStockProducts();
             byte[] excelData = excelExportService.generateProductsExcel(products);
@@ -206,7 +207,7 @@ public class ProductController {
                     .headers(headers)
                     .body(excelData);
         } catch (IOException e) {
-            log.error("Failed to generate Excel file", e);
+            // log.error("Failed to generate Excel file", e);
             return ResponseEntity.internalServerError().build();
         }
     }

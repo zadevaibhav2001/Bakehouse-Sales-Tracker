@@ -1,9 +1,6 @@
 package com.example.myapp.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -13,9 +10,6 @@ import java.util.UUID;
     @Index(name = "idx_orders_order_date", columnList = "orderDateTime"),
     @Index(name = "idx_orders_product", columnList = "product_id")
 })
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Order {
 
     @Id
@@ -40,6 +34,39 @@ public class Order {
 
     @Column(nullable = false)
     private Instant updatedAt;
+
+    public Order() {}
+
+    public Order(UUID orderId, Product product, int quantity, double totalCost, Instant orderDateTime, Instant createdAt, Instant updatedAt) {
+        this.orderId = orderId;
+        this.product = product;
+        this.quantity = quantity;
+        this.totalCost = totalCost;
+        this.orderDateTime = orderDateTime;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public UUID getOrderId() { return orderId; }
+    public void setOrderId(UUID orderId) { this.orderId = orderId; }
+    
+    public Product getProduct() { return product; }
+    public void setProduct(Product product) { this.product = product; }
+    
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
+    
+    public double getTotalCost() { return totalCost; }
+    public void setTotalCost(double totalCost) { this.totalCost = totalCost; }
+    
+    public Instant getOrderDateTime() { return orderDateTime; }
+    public void setOrderDateTime(Instant orderDateTime) { this.orderDateTime = orderDateTime; }
+    
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 
     @PrePersist
     protected void onCreate() {

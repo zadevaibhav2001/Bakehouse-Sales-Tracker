@@ -2,7 +2,6 @@ package com.example.myapp.service;
 
 import com.example.myapp.dto.Order;
 import com.example.myapp.dto.Product;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -15,7 +14,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
-@Slf4j
 public class ExcelExportService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -25,7 +23,7 @@ public class ExcelExportService {
      * Generate Excel file for orders
      */
     public byte[] generateOrdersExcel(List<Order> orders) throws IOException {
-        log.info("Generating Excel file for {} orders", orders.size());
+        // log.info("Generating Excel file for {} orders", orders.size());
 
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -88,7 +86,7 @@ public class ExcelExportService {
      * Generate Excel file for products
      */
     public byte[] generateProductsExcel(List<Product> products) throws IOException {
-        log.info("Generating Excel file for {} products", products.size());
+        // log.info("Generating Excel file for {} products", products.size());
 
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {

@@ -1,6 +1,5 @@
 package com.example.myapp.controller;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,13 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
-@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(
             DataIntegrityViolationException ex) {
-        log.error("Data integrity violation", ex);
+        // log.error("Data integrity violation", ex);
         
         Map<String, String> error = new HashMap<>();
         error.put("error", "Data conflict");
@@ -29,7 +27,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(
             IllegalArgumentException ex) {
-        log.error("Invalid argument", ex);
+        // log.error("Invalid argument", ex);
         
         Map<String, String> error = new HashMap<>();
         error.put("error", "Invalid request");
@@ -40,7 +38,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGeneral(Exception ex) {
-        log.error("Unexpected error", ex);
+        // log.error("Unexpected error", ex);
         
         Map<String, String> error = new HashMap<>();
         error.put("error", "Internal server error");

@@ -3,8 +3,6 @@ package com.example.myapp.controller;
 import com.example.myapp.dto.Order;
 import com.example.myapp.service.ExcelExportService;
 import com.example.myapp.service.OrderService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,12 +19,15 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/orders")
-@RequiredArgsConstructor
-@Slf4j
 public class OrderController {
 
     private final OrderService orderService;
     private final ExcelExportService excelExportService;
+
+    public OrderController(OrderService orderService, ExcelExportService excelExportService) {
+        this.orderService = orderService;
+        this.excelExportService = excelExportService;
+    }
 
     /**
      * Get all orders
@@ -34,7 +35,7 @@ public class OrderController {
      */
     @GetMapping
     public ResponseEntity<List<Order>> getAllOrders() {
-        log.info("GET /api/orders - Fetching all orders");
+        // log.info("GET /api/orders - Fetching all orders");
         List<Order> orders = orderService.getAllOrders();
         return ResponseEntity.ok(orders);
     }
@@ -45,7 +46,7 @@ public class OrderController {
      */
     @GetMapping("/recent")
     public ResponseEntity<List<Order>> getRecentOrders() {
-        log.info("GET /api/orders/recent - Fetching recent orders");
+        // log.info("GET /api/orders/recent - Fetching recent orders");
         List<Order> orders = orderService.getRecentOrders();
         return ResponseEntity.ok(orders);
     }
@@ -56,7 +57,7 @@ public class OrderController {
      */
     @GetMapping("/{orderId}")
     public ResponseEntity<Order> getOrderById(@PathVariable UUID orderId) {
-        log.info("GET /api/orders/{} - Fetching order", orderId);
+        // log.info("GET /api/orders/{} - Fetching order", orderId);
         Order order = orderService.getOrderById(orderId);
         if (order == null) {
             return ResponseEntity.notFound().build();
@@ -70,7 +71,7 @@ public class OrderController {
      */
     @GetMapping("/product/{productId}")
     public ResponseEntity<List<Order>> getOrdersByProduct(@PathVariable Long productId) {
-        log.info("GET /api/orders/product/{} - Fetching orders for product", productId);
+        // log.info("GET /api/orders/product/{} - Fetching orders for product", productId);
         List<Order> orders = orderService.getOrdersByProductId(productId);
         return ResponseEntity.ok(orders);
     }
@@ -82,7 +83,7 @@ public class OrderController {
     @GetMapping("/after")
     public ResponseEntity<List<Order>> getOrdersAfter(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date) {
-        log.info("GET /api/orders/after?date={}", date);
+        // log.info("GET /api/orders/after?date={}", date);
         List<Order> orders = orderService.getOrdersAfter(date);
         return ResponseEntity.ok(orders);
     }
@@ -95,7 +96,7 @@ public class OrderController {
     public ResponseEntity<List<Order>> getOrdersBetween(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        log.info("GET /api/orders/between?start={}&end={}", start, end);
+        // log.info("GET /api/orders/between?start={}&end={}", start, end);
         List<Order> orders = orderService.getOrdersBetween(start, end);
         return ResponseEntity.ok(orders);
     }
@@ -107,12 +108,12 @@ public class OrderController {
      */
     @PostMapping
     public ResponseEntity<Order> createOrder(@RequestBody Order order) {
-        log.info("POST /api/orders - Creating order");
+        // log.info("POST /api/orders - Creating order");
         try {
             Order created = orderService.createOrder(order);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {
-            log.error("Failed to create order: {}", e.getMessage());
+            // log.error("Failed to create order: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
@@ -125,25 +126,25 @@ public class OrderController {
     @PostMapping("/create")
     public ResponseEntity<?> createOrderWithProductId(
             @RequestBody Map<String, Object> request) {
-        log.info("POST /api/orders/create - Creating order with product ID: {}", request);
+        // log.info("POST /api/orders/create - Creating order with product ID: {}", request);
         try {
             if (!request.containsKey("productId") || !request.containsKey("quantity")) {
-                log.error("Missing required fields: productId or quantity");
+                // log.error("Missing required fields: productId or quantity");
                 return ResponseEntity.badRequest().body(Map.of("error", "Missing required fields: productId and quantity"));
             }
             
             Long productId = Long.valueOf(request.get("productId").toString());
             int quantity = Integer.parseInt(request.get("quantity").toString());
             
-            log.info("Creating order for productId: {} with quantity: {}", productId, quantity);
+            // log.info("Creating order for productId: {} with quantity: {}", productId, quantity);
             Order created = orderService.createOrderWithProductId(productId, quantity);
-            log.info("Order created successfully: {}", created.orderId());
+            // log.info("Order created successfully: {}", created.orderId());
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {
-            log.error("Failed to create order: {}", e.getMessage());
+            // log.error("Failed to create order: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            log.error("Invalid request format or internal error", e);
+            // log.error("Invalid request format or internal error", e);
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid request format: " + e.getMessage()));
         }
     }
@@ -156,7 +157,7 @@ public class OrderController {
     public ResponseEntity<Order> updateOrderQuantity(
             @PathVariable UUID orderId,
             @RequestParam int quantity) {
-        log.info("PATCH /api/orders/{}/quantity?quantity={}", orderId, quantity);
+        // log.info("PATCH /api/orders/{}/quantity?quantity={}", orderId, quantity);
         Order updated = orderService.updateOrderQuantity(orderId, quantity);
         if (updated == null) {
             return ResponseEntity.notFound().build();
@@ -172,7 +173,7 @@ public class OrderController {
     public ResponseEntity<?> deleteOrder(
             @PathVariable UUID orderId,
             @RequestParam(defaultValue = "false") boolean forceDelete) {
-        log.info("DELETE /api/orders/{}?forceDelete={}", orderId, forceDelete);
+        // log.info("DELETE /api/orders/{}?forceDelete={}", orderId, forceDelete);
         try {
             boolean deleted = orderService.deleteOrder(orderId, forceDelete);
             if (!deleted) {
@@ -180,7 +181,7 @@ public class OrderController {
             }
             return ResponseEntity.noContent().build();
         } catch (IllegalStateException e) {
-            log.warn("Order deletion blocked: {}", e.getMessage());
+            // log.warn("Order deletion blocked: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("error", e.getMessage()));
         }
@@ -192,7 +193,7 @@ public class OrderController {
      */
     @GetMapping("/product/{productId}/stats")
     public ResponseEntity<Map<String, Object>> getProductStats(@PathVariable Long productId) {
-        log.info("GET /api/orders/product/{}/stats", productId);
+        // log.info("GET /api/orders/product/{}/stats", productId);
         Long totalQuantity = orderService.getTotalQuantityForProduct(productId);
         long orderCount = orderService.countOrdersForProduct(productId);
         double totalRevenue = orderService.getTotalRevenueForProduct(productId);
@@ -213,7 +214,7 @@ public class OrderController {
      */
     @GetMapping("/revenue/total")
     public ResponseEntity<Map<String, Object>> getTotalRevenue() {
-        log.info("GET /api/orders/revenue/total");
+        // log.info("GET /api/orders/revenue/total");
         double totalRevenue = orderService.getTotalRevenue();
         return ResponseEntity.ok(Map.of("totalRevenue", totalRevenue));
     }
@@ -226,7 +227,7 @@ public class OrderController {
     public ResponseEntity<Map<String, Object>> getRevenueBetween(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        log.info("GET /api/orders/revenue/between?start={}&end={}", start, end);
+        // log.info("GET /api/orders/revenue/between?start={}&end={}", start, end);
         double revenue = orderService.getRevenueBetween(start, end);
         return ResponseEntity.ok(Map.of(
             "startDate", start,
@@ -241,7 +242,7 @@ public class OrderController {
      */
     @GetMapping("/high-value")
     public ResponseEntity<List<Order>> getHighValueOrders(@RequestParam double minCost) {
-        log.info("GET /api/orders/high-value?minCost={}", minCost);
+        // log.info("GET /api/orders/high-value?minCost={}", minCost);
         List<Order> orders = orderService.getHighValueOrders(minCost);
         return ResponseEntity.ok(orders);
     }
@@ -252,7 +253,7 @@ public class OrderController {
      */
     @GetMapping("/export/excel")
     public ResponseEntity<byte[]> exportOrdersToExcel() {
-        log.info("GET /api/orders/export/excel - Exporting all orders");
+        // log.info("GET /api/orders/export/excel - Exporting all orders");
         try {
             List<Order> orders = orderService.getAllOrders();
             byte[] excelData = excelExportService.generateOrdersExcel(orders);
@@ -267,7 +268,7 @@ public class OrderController {
                     .headers(headers)
                     .body(excelData);
         } catch (IOException e) {
-            log.error("Failed to generate Excel file", e);
+            // log.error("Failed to generate Excel file", e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -278,7 +279,7 @@ public class OrderController {
      */
     @GetMapping("/export/excel/product/{productId}")
     public ResponseEntity<byte[]> exportProductOrdersToExcel(@PathVariable Long productId) {
-        log.info("GET /api/orders/export/excel/product/{} - Exporting orders for product", productId);
+        // log.info("GET /api/orders/export/excel/product/{} - Exporting orders for product", productId);
         try {
             List<Order> orders = orderService.getOrdersByProductId(productId);
             byte[] excelData = excelExportService.generateOrdersExcel(orders);
@@ -294,7 +295,7 @@ public class OrderController {
                     .headers(headers)
                     .body(excelData);
         } catch (IOException e) {
-            log.error("Failed to generate Excel file", e);
+            // log.error("Failed to generate Excel file", e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -307,7 +308,7 @@ public class OrderController {
     public ResponseEntity<byte[]> exportOrdersBetweenToExcel(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        log.info("GET /api/orders/export/excel/between?start={}&end={}", start, end);
+        // log.info("GET /api/orders/export/excel/between?start={}&end={}", start, end);
         try {
             List<Order> orders = orderService.getOrdersBetween(start, end);
             byte[] excelData = excelExportService.generateOrdersExcel(orders);
@@ -323,7 +324,7 @@ public class OrderController {
                     .headers(headers)
                     .body(excelData);
         } catch (IOException e) {
-            log.error("Failed to generate Excel file", e);
+            // log.error("Failed to generate Excel file", e);
             return ResponseEntity.internalServerError().build();
         }
     }

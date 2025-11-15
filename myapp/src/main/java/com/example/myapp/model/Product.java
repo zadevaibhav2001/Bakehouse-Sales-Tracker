@@ -1,17 +1,11 @@
 package com.example.myapp.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "products")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Product {
 
     @Id
@@ -33,6 +27,35 @@ public class Product {
 
     @Column(nullable = false)
     private Instant updatedAt;
+
+    public Product() {}
+
+    public Product(Long id, String name, double price, boolean inStock, Instant createdAt, Instant updatedAt) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.inStock = inStock;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
+    
+    public boolean isInStock() { return inStock; }
+    public void setInStock(boolean inStock) { this.inStock = inStock; }
+    
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 
     @PrePersist
     protected void onCreate() {

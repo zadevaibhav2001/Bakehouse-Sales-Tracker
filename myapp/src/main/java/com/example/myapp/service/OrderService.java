@@ -4,8 +4,6 @@ import com.example.myapp.dto.Order;
 import com.example.myapp.mapper.OrderMapper;
 import com.example.myapp.repository.OrderRepository;
 import com.example.myapp.repository.ProductRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,20 +15,24 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
 
+    public OrderService(OrderRepository orderRepository, ProductRepository productRepository, OrderMapper orderMapper) {
+        this.orderRepository = orderRepository;
+        this.productRepository = productRepository;
+        this.orderMapper = orderMapper;
+    }
+
     /**
      * Get all orders
      */
     @Transactional(readOnly = true)
     public List<Order> getAllOrders() {
-        log.debug("Fetching all orders");
+        // log.debug("Fetching all orders");
         return orderRepository.findAll().stream()
             .map(orderMapper::toDto)
             .collect(Collectors.toList());
@@ -41,7 +43,7 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public Order getOrderById(UUID orderId) {
-        log.debug("Fetching order with id: {}", orderId);
+        // log.debug("Fetching order with id: {}", orderId);
         return orderRepository.findById(orderId)
             .map(orderMapper::toDto)
             .orElse(null);
@@ -52,7 +54,7 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public List<Order> getRecentOrders() {
-        log.debug("Fetching recent orders");
+        // log.debug("Fetching recent orders");
         return orderRepository.findAllByOrderByOrderDateTimeDesc().stream()
             .map(orderMapper::toDto)
             .collect(Collectors.toList());
@@ -63,7 +65,7 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public List<Order> getOrdersByProductId(Long productId) {
-        log.debug("Fetching orders for product: {}", productId);
+        // log.debug("Fetching orders for product: {}", productId);
         return orderRepository.findByProductId(productId).stream()
             .map(orderMapper::toDto)
             .collect(Collectors.toList());
@@ -74,7 +76,7 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public List<Order> getOrdersAfter(LocalDateTime dateTime) {
-        log.debug("Fetching orders after: {}", dateTime);
+        // log.debug("Fetching orders after: {}", dateTime);
         Instant instant = dateTime.toInstant(ZoneOffset.UTC);
         return orderRepository.findByOrderDateTimeAfter(instant).stream()
             .map(orderMapper::toDto)
@@ -86,7 +88,7 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public List<Order> getOrdersBetween(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        log.debug("Fetching orders between {} and {}", startDateTime, endDateTime);
+        // log.debug("Fetching orders between {} and {}", startDateTime, endDateTime);
         Instant start = startDateTime.toInstant(ZoneOffset.UTC);
         Instant end = endDateTime.toInstant(ZoneOffset.UTC);
         return orderRepository.findByOrderDateTimeBetween(start, end).stream()
@@ -99,12 +101,12 @@ public class OrderService {
      */
     @Transactional
     public Order createOrder(Order orderDto) {
-        log.info("Creating new order for product: {}", orderDto.product().name());
+        // log.info("Creating new order for product: {}", orderDto.product().name());
         
         // Find product by name (you might want to use ID instead)
         com.example.myapp.model.Product product = productRepository.findByName(orderDto.product().name());
         if (product == null) {
-            log.error("Product not found: {}", orderDto.product().name());
+            // log.error("Product not found: {}", orderDto.product().name());
             throw new IllegalArgumentException("Product not found: " + orderDto.product().name());
         }
 
@@ -118,7 +120,7 @@ public class OrderService {
      */
     @Transactional
     public Order createOrderWithProductId(Long productId, int quantity) {
-        log.info("Creating new order for product ID: {} with quantity: {}", productId, quantity);
+        // log.info("Creating new order for product ID: {} with quantity: {}", productId, quantity);
         
         if (quantity <= 0) {
             throw new IllegalArgumentException("Quantity must be greater than 0");
@@ -127,7 +129,7 @@ public class OrderService {
         com.example.myapp.model.Product product = productRepository.findById(productId)
             .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + productId));
         
-        log.info("Found product: {} with price: {}", product.getName(), product.getPrice());
+        // log.info("Found product: {} with price: {}", product.getName(), product.getPrice());
 
         com.example.myapp.model.Order entity = new com.example.myapp.model.Order();
         entity.setOrderId(UUID.randomUUID());
@@ -136,12 +138,12 @@ public class OrderService {
         entity.setTotalCost(quantity * product.getPrice());
         entity.setOrderDateTime(Instant.now());
         
-        log.info("Saving order with totalCost: {}", entity.getTotalCost());
+        // log.info("Saving order with totalCost: {}", entity.getTotalCost());
         com.example.myapp.model.Order saved = orderRepository.save(entity);
-        log.info("Order saved with ID: {}", saved.getOrderId());
+        // log.info("Order saved with ID: {}", saved.getOrderId());
         
         Order dto = orderMapper.toDto(saved);
-        log.info("Returning order DTO: {}", dto);
+        // log.info("Returning order DTO: {}", dto);
         return dto;
     }
 
@@ -150,7 +152,7 @@ public class OrderService {
      */
     @Transactional
     public Order updateOrderQuantity(UUID orderId, int newQuantity) {
-        log.info("Updating order {} quantity to: {}", orderId, newQuantity);
+        // log.info("Updating order {} quantity to: {}", orderId, newQuantity);
         return orderRepository.findById(orderId)
             .map(entity -> {
                 entity.setQuantity(newQuantity);
@@ -173,19 +175,19 @@ public class OrderService {
      */
     @Transactional
     public boolean deleteOrder(UUID orderId, boolean forceDelete) {
-        log.info("Deleting order with id: {}, forceDelete: {}", orderId, forceDelete);
+        // log.info("Deleting order with id: {}, forceDelete: {}", orderId, forceDelete);
         
         return orderRepository.findById(orderId)
             .map(order -> {
                 if (!forceDelete) {
                     Instant oneHourAgo = Instant.now().minusSeconds(3600);
                     if (order.getCreatedAt().isBefore(oneHourAgo)) {
-                        log.warn("Cannot delete order {} - created more than 1 hour ago", orderId);
+                        // log.warn("Cannot delete order {} - created more than 1 hour ago", orderId);
                         throw new IllegalStateException("Cannot delete order created more than 1 hour ago");
                     }
                 }
                 orderRepository.deleteById(orderId);
-                log.info("Order {} deleted successfully", orderId);
+                // log.info("Order {} deleted successfully", orderId);
                 return true;
             })
             .orElse(false);
@@ -196,7 +198,7 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public Long getTotalQuantityForProduct(Long productId) {
-        log.debug("Calculating total quantity for product: {}", productId);
+        // log.debug("Calculating total quantity for product: {}", productId);
         Long total = orderRepository.getTotalQuantityByProductId(productId);
         return total != null ? total : 0L;
     }
@@ -206,7 +208,7 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public long countOrdersForProduct(Long productId) {
-        log.debug("Counting orders for product: {}", productId);
+        // log.debug("Counting orders for product: {}", productId);
         return orderRepository.countByProductId(productId);
     }
 
@@ -215,7 +217,7 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public double getTotalRevenue() {
-        log.debug("Calculating total revenue");
+        // log.debug("Calculating total revenue");
         Double total = orderRepository.getTotalRevenue();
         return total != null ? total : 0.0;
     }
@@ -225,7 +227,7 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public double getTotalRevenueForProduct(Long productId) {
-        log.debug("Calculating total revenue for product: {}", productId);
+        // log.debug("Calculating total revenue for product: {}", productId);
         Double total = orderRepository.getTotalRevenueByProductId(productId);
         return total != null ? total : 0.0;
     }
@@ -235,7 +237,7 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public double getRevenueBetween(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        log.debug("Calculating revenue between {} and {}", startDateTime, endDateTime);
+        // log.debug("Calculating revenue between {} and {}", startDateTime, endDateTime);
         Instant start = startDateTime.toInstant(ZoneOffset.UTC);
         Instant end = endDateTime.toInstant(ZoneOffset.UTC);
         Double total = orderRepository.getTotalRevenueBetween(start, end);
@@ -247,7 +249,7 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public List<Order> getHighValueOrders(double minCost) {
-        log.debug("Fetching orders with cost greater than: {}", minCost);
+        // log.debug("Fetching orders with cost greater than: {}", minCost);
         return orderRepository.findByTotalCostGreaterThan(minCost).stream()
             .map(orderMapper::toDto)
             .collect(Collectors.toList());
