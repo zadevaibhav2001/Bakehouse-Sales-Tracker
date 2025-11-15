@@ -12,16 +12,34 @@ function convertISTtoUTC(istDateTimeString) {
 
 function convertUTCtoIST(utcDateTimeString) {
     if (!utcDateTimeString) return '';
-    const utcDate = new Date(utcDateTimeString + 'Z'); // Add Z for UTC
-    return utcDate.toLocaleString('en-IN', {
-        timeZone: 'Asia/Kolkata',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
+    try {
+        // Handle different date formats from backend
+        let utcDate;
+        if (utcDateTimeString.includes('T')) {
+            // ISO format: 2025-11-15T10:30:00
+            utcDate = new Date(utcDateTimeString + (utcDateTimeString.endsWith('Z') ? '' : 'Z'));
+        } else {
+            // Simple format: assume it's already a valid date string
+            utcDate = new Date(utcDateTimeString);
+        }
+        
+        if (isNaN(utcDate.getTime())) {
+            return utcDateTimeString; // Return original if parsing fails
+        }
+        
+        return utcDate.toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    } catch (error) {
+        console.error('Date conversion error:', error, utcDateTimeString);
+        return utcDateTimeString; // Return original string if conversion fails
+    }
 }
 
 // Initialize app
@@ -145,10 +163,11 @@ function showSection(sectionId) {
 // Dashboard
 async function loadDashboard() {
     try {
-        const today = new Date().toISOString().split('T')[0];
+        // Get today's date in IST timezone
+        const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD format
         // Convert today's IST range to UTC for API call
-        const startUTC = convertISTtoUTC(today + 'T00:00:00');
-        const endUTC = convertISTtoUTC(today + 'T23:59:59');
+        const startUTC = convertISTtoUTC(todayIST + 'T00:00:00');
+        const endUTC = convertISTtoUTC(todayIST + 'T23:59:59');
         
         const [orders, todayRevenue, products] = await Promise.all([
             fetch(`${API_BASE}/orders/recent`).then(r => r.json()),
@@ -472,17 +491,18 @@ function navigateToCreateOrders() {
 }
 
 function navigateToTodaysReport() {
-    const today = new Date().toISOString().split('T')[0];
+    // Get today's date in IST timezone
+    const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD format
     showSection('reports');
     document.querySelectorAll('.nav-menu a').forEach(l => l.classList.remove('active'));
     document.querySelector('.nav-menu a[href="#reports"]').classList.add('active');
     
-    // Set today's date in both fields
-    document.getElementById('reportStartDate').value = today;
-    document.getElementById('reportEndDate').value = today;
+    // Set today's date in date fields
+    document.getElementById('reportStartDate').value = todayIST;
+    document.getElementById('reportEndDate').value = todayIST;
     
-    // Generate the report automatically
-    getRevenueReport();
+    // Generate the report and chart automatically
+    generateReports();
 }
 
 function changeQuantity(productId, change) {
@@ -738,6 +758,8 @@ async function getRevenueReport() {
 
 async function getHighValueOrders() {
     const minCost = document.getElementById('minCost').value;
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
 
     if (!minCost) {
         Swal.fire({
@@ -749,26 +771,25 @@ async function getHighValueOrders() {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/orders/high-value?minCost=${minCost}`);
-        const orders = await response.json();
+        let url = `${API_BASE}/orders/high-value?minCost=${minCost}`;
         
-        if (orders.length === 0) {
-            document.getElementById('highValueResult').innerHTML = '<p>No orders found above this amount</p>';
+        // Apply date filter if dates are selected
+        if (startDate && endDate) {
+            const startUTC = convertISTtoUTC(startDate + 'T00:00:00');
+            const endUTC = convertISTtoUTC(endDate + 'T23:59:59');
+            
+            // Get orders within date range first, then filter by cost
+            const ordersResponse = await fetch(`${API_BASE}/orders/between?start=${startUTC}&end=${endUTC}`);
+            const allOrders = await ordersResponse.json();
+            const orders = allOrders.filter(order => order.totalCost >= minCost);
+            
+            displayHighValueOrders(orders, minCost, startDate, endDate);
             return;
         }
-
-        document.getElementById('highValueResult').innerHTML = `
-            <h4>High Value Orders (>${minCost})</h4>
-            <ul style="list-style: none; padding: 0;">
-                ${orders.map(order => `
-                    <li style="padding: 0.5rem; border-bottom: 1px solid var(--border-color);">
-                        <strong>${order.product.name}</strong> - 
-                        Qty: ${order.quantity} - 
-                        <span style="color: var(--success-color);">₹${order.totalCost.toFixed(2)}</span>
-                    </li>
-                `).join('')}
-            </ul>
-        `;
+        
+        const response = await fetch(url);
+        const orders = await response.json();
+        displayHighValueOrders(orders, minCost);
     } catch (error) {
         Swal.fire({
             icon: 'error',
@@ -776,6 +797,146 @@ async function getHighValueOrders() {
             text: 'Failed to get high value orders'
         });
     }
+}
+
+function displayHighValueOrders(orders, minCost, startDate = null, endDate = null) {
+    if (orders.length === 0) {
+        const dateRange = startDate && endDate ? ` between ${startDate} and ${endDate}` : '';
+        document.getElementById('highValueResult').innerHTML = `<p>No orders found above ₹${minCost}${dateRange}</p>`;
+        return;
+    }
+
+    const dateRange = startDate && endDate ? ` (${startDate} to ${endDate})` : '';
+    document.getElementById('highValueResult').innerHTML = `
+        <h4>High Value Orders (>₹${minCost})${dateRange}</h4>
+        <ul style="list-style: none; padding: 0;">
+            ${orders.map(order => `
+                <li style="padding: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                    <strong>${order.product.name}</strong> - 
+                    Qty: ${order.quantity} - 
+                    <span style="color: var(--success-color);">₹${order.totalCost.toFixed(2)}</span>
+                    ${startDate && endDate ? `<br><small>${formatDate(order.orderDateTime)}</small>` : ''}
+                </li>
+            `).join('')}
+        </ul>
+    `;
+}
+
+
+// Sales Chart
+let salesChart = null;
+
+async function generateSalesChart() {
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
+
+    if (!startDate || !endDate) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Missing dates',
+            text: 'Please select both start and end dates'
+        });
+        return;
+    }
+
+    try {
+        // Convert IST input to UTC for API calls
+        const startUTC = convertISTtoUTC(startDate + 'T00:00:00');
+        const endUTC = convertISTtoUTC(endDate + 'T23:59:59');
+        
+        const ordersUrl = `${API_BASE}/orders/between?start=${startUTC}&end=${endUTC}`;
+        const ordersResponse = await fetch(ordersUrl);
+        const orders = await ordersResponse.json();
+        
+        // Generate complete time range based on filter dates
+        const startDateTime = new Date(startDate + 'T00:00:00');
+        const endDateTime = new Date(endDate + 'T23:59:59');
+        const timeLabels = [];
+        const salesData = [];
+        
+        // Create hourly slots for the entire date range
+        const current = new Date(startDateTime);
+        while (current <= endDateTime) {
+            const label = current.toLocaleString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).replace(', ', ', ');
+            timeLabels.push(label);
+            salesData.push(0); // Initialize with 0
+            current.setHours(current.getHours() + 1);
+        }
+        
+        // Fill in actual sales data
+        orders.forEach(order => {
+            const orderDateTime = convertUTCtoIST(order.orderDateTime);
+            const orderHour = orderDateTime.split(':')[0] + ':00';
+            
+            // Find matching time slot
+            const index = timeLabels.findIndex(label => label.startsWith(orderHour));
+            if (index !== -1) {
+                salesData[index] += order.totalCost;
+            }
+        });
+        
+        // Destroy existing chart if it exists
+        if (salesChart) {
+            salesChart.destroy();
+        }
+        
+        // Create new chart
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [{
+                    label: 'Sales (₹)',
+                    data: salesData,
+                    borderColor: 'rgb(184, 149, 106)',
+                    backgroundColor: 'rgba(184, 149, 106, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + value.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Sales from ${startDate} to ${endDate}`
+                    }
+                }
+            }
+        });
+        
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error generating chart',
+            text: 'Failed to generate sales chart'
+        });
+    }
+}
+
+// Generate both reports and chart with common date filter
+async function generateReports() {
+    await getRevenueReport();
+    await generateSalesChart();
 }
 
 // Modal Functions
