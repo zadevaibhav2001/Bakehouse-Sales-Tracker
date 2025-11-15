@@ -3,6 +3,27 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
     ? 'http://3.110.159.51:8080/api'  // For local development
     : '/api';  // For production (Nginx will proxy to backend)
 
+// Timezone conversion functions
+function convertISTtoUTC(istDateTimeString) {
+    if (!istDateTimeString) return null;
+    const istDate = new Date(istDateTimeString + '+05:30'); // IST is UTC+5:30
+    return istDate.toISOString().slice(0, 19); // Remove 'Z' to match LocalDateTime format
+}
+
+function convertUTCtoIST(utcDateTimeString) {
+    if (!utcDateTimeString) return '';
+    const utcDate = new Date(utcDateTimeString + 'Z'); // Add Z for UTC
+    return utcDate.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
@@ -125,9 +146,13 @@ function showSection(sectionId) {
 async function loadDashboard() {
     try {
         const today = new Date().toISOString().split('T')[0];
+        // Convert today's IST range to UTC for API call
+        const startUTC = convertISTtoUTC(today + 'T00:00:00');
+        const endUTC = convertISTtoUTC(today + 'T23:59:59');
+        
         const [orders, todayRevenue, products] = await Promise.all([
             fetch(`${API_BASE}/orders/recent`).then(r => r.json()),
-            fetch(`${API_BASE}/orders/revenue/between?start=${today}T00:00:00&end=${today}T23:59:59`).then(r => r.json()),
+            fetch(`${API_BASE}/orders/revenue/between?start=${startUTC}&end=${endUTC}`).then(r => r.json()),
             fetch(`${API_BASE}/products`).then(r => r.json())
         ]);
 
@@ -631,7 +656,11 @@ async function filterOrders() {
     }
 
     try {
-        const url = `${API_BASE}/orders/between?start=${startDate}T00:00:00&end=${endDate}T23:59:59`;
+        // Convert IST input to UTC for API call
+        const startUTC = convertISTtoUTC(startDate + 'T00:00:00');
+        const endUTC = convertISTtoUTC(endDate + 'T23:59:59');
+        
+        const url = `${API_BASE}/orders/between?start=${startUTC}&end=${endUTC}`;
         const response = await fetch(url);
         const orders = await response.json();
         displayOrders(orders);
@@ -663,12 +692,16 @@ async function getRevenueReport() {
     }
 
     try {
-        const url = `${API_BASE}/orders/revenue/between?start=${startDate}T00:00:00&end=${endDate}T23:59:59`;
+        // Convert IST input to UTC for API calls
+        const startUTC = convertISTtoUTC(startDate + 'T00:00:00');
+        const endUTC = convertISTtoUTC(endDate + 'T23:59:59');
+        
+        const url = `${API_BASE}/orders/revenue/between?start=${startUTC}&end=${endUTC}`;
         const response = await fetch(url);
         const data = await response.json();
         
         // Also fetch orders for product breakdown
-        const ordersUrl = `${API_BASE}/orders/between?start=${startDate}T00:00:00&end=${endDate}T23:59:59`;
+        const ordersUrl = `${API_BASE}/orders/between?start=${startUTC}&end=${endUTC}`;
         const ordersResponse = await fetch(ordersUrl);
         const orders = await ordersResponse.json();
         
@@ -758,8 +791,8 @@ function closeModal(modalId) {
 
 // Utility Functions
 function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    // Convert UTC datetime to IST for display
+    return convertUTCtoIST(dateString);
 }
 
 function showSuccess(message) {

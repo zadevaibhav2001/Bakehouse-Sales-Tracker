@@ -122,8 +122,14 @@
             </div>
             
             <div class="filters">
-                <input type="date" id="startDate" class="date-input">
-                <input type="date" id="endDate" class="date-input">
+                <div class="date-group">
+                    <label for="startDate">Start Date (IST):</label>
+                    <input type="date" id="startDate" class="date-input">
+                </div>
+                <div class="date-group">
+                    <label for="endDate">End Date (IST):</label>
+                    <input type="date" id="endDate" class="date-input">
+                </div>
                 <button class="btn btn-secondary" onclick="filterOrders()">
                     <i class="fas fa-filter"></i> Filter
                 </button>
@@ -143,8 +149,14 @@
                 <div class="report-card">
                     <h3>Revenue by Date Range</h3>
                     <div class="report-form">
-                        <input type="date" id="reportStartDate" class="date-input">
-                        <input type="date" id="reportEndDate" class="date-input">
+                        <div class="date-group">
+                            <label for="reportStartDate">Start Date (IST):</label>
+                            <input type="date" id="reportStartDate" class="date-input">
+                        </div>
+                        <div class="date-group">
+                            <label for="reportEndDate">End Date (IST):</label>
+                            <input type="date" id="reportEndDate" class="date-input">
+                        </div>
                         <button class="btn btn-primary" onclick="getRevenueReport()">Generate</button>
                     </div>
                     <div id="revenueResult" class="report-result"></div>

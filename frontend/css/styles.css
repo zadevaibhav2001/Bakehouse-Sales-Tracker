@@ -231,6 +231,7 @@ main {
     gap: 1rem;
     margin-bottom: 1.5rem;
     flex-wrap: wrap;
+    align-items: flex-end;
 }
 
 .search-input,
@@ -241,6 +242,18 @@ main {
     border: 1px solid var(--border-color);
     border-radius: 5px;
     font-size: 1rem;
+}
+
+.date-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.date-group label {
+    font-size: 0.9rem;
+    color: var(--dark-text);
+    font-weight: 500;
 }
 
 .search-input {
