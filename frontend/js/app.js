@@ -3,14 +3,48 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
     ? 'http://3.110.159.51:8080/api'  // For local development
     : '/api';  // For production (Nginx will proxy to backend)
 
+// Check authentication on page load
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+        return false;
+    }
+    return true;
+}
+
+// Add token to API requests
+function getAuthHeaders() {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+}
+
+// Logout function
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    window.location.href = 'login.html';
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
+    if (!checkAuth()) return;
+    
     initNavigation();
     initMobileMenu();
     setDefaultDates();
     loadDashboard();
     loadProducts();
     loadCreateOrders();
+    
+    // Add username to navbar
+    const username = localStorage.getItem('username');
+    if (username) {
+        document.querySelector('.nav-brand h1').innerHTML += ` <small style="font-size: 0.6em; opacity: 0.8;">(${username})</small>`;
+    }
 });
 
 // Set today's date as default for all date inputs
@@ -126,9 +160,9 @@ async function loadDashboard() {
     try {
         const today = new Date().toISOString().split('T')[0];
         const [orders, todayRevenue, products] = await Promise.all([
-            fetch(`${API_BASE}/orders/recent`).then(r => r.json()),
-            fetch(`${API_BASE}/orders/revenue/between?start=${today}T00:00:00&end=${today}T23:59:59`).then(r => r.json()),
-            fetch(`${API_BASE}/products`).then(r => r.json())
+            fetch(`${API_BASE}/orders/recent`, { headers: getAuthHeaders() }).then(r => r.json()),
+            fetch(`${API_BASE}/orders/revenue/between?start=${today}T00:00:00&end=${today}T23:59:59`, { headers: getAuthHeaders() }).then(r => r.json()),
+            fetch(`${API_BASE}/products`, { headers: getAuthHeaders() }).then(r => r.json())
         ]);
 
         document.getElementById('totalOrders').textContent = orders.length;
