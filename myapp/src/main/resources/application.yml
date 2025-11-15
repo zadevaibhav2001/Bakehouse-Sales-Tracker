@@ -48,6 +48,16 @@ management:
     health:
       show-details: when-authorized
 
+# AWS Configuration
+aws:
+  s3:
+    bucket-name: ${S3_BUCKET_NAME:ishabakehouse}
+
+# Application Configuration
+app:
+  database:
+    file-path: ${DB_FILE_PATH:/opt/bakehouse/myapp/data/myapp.mv.db}
+
 # Logging
 logging:
   level:
