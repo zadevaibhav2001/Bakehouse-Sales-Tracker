@@ -14,7 +14,7 @@ public class ScheduledBackupService {
     @Autowired
     private BackupService backupService;
 
-    @Scheduled(cron = "0 30 17 * * ?") // Daily at 5:30 PM
+    @Scheduled(cron = "0 0 * * * ?") // Every hour at the top of the hour
     public void performScheduledBackup() {
         try {
             logger.info("Starting scheduled database backup...");
