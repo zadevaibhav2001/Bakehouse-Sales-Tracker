@@ -126,7 +126,7 @@ async function loadDashboard() {
     try {
         const today = new Date().toISOString().split('T')[0];
         const [orders, todayRevenue, products] = await Promise.all([
-            fetch(`${API_BASE}/orders`).then(r => r.json()),
+            fetch(`${API_BASE}/orders/recent`).then(r => r.json()),
             fetch(`${API_BASE}/orders/revenue/between?start=${today}T00:00:00&end=${today}T23:59:59`).then(r => r.json()),
             fetch(`${API_BASE}/products`).then(r => r.json())
         ]);
