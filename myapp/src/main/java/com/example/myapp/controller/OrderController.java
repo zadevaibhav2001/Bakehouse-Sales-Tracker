@@ -165,6 +165,27 @@ public class OrderController {
     }
 
     /**
+     * Update order
+     * PUT /api/orders/{orderId}
+     */
+    @PutMapping("/{orderId}")
+    public ResponseEntity<Order> updateOrder(
+            @PathVariable UUID orderId,
+            @RequestBody Order order) {
+        log.info("PUT /api/orders/{}", orderId);
+        try {
+            Order updated = orderService.updateOrder(orderId, order);
+            if (updated == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            log.error("Failed to update order: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
      * Delete order
      * DELETE /api/orders/{orderId}?forceDelete=true
      */

@@ -13,18 +13,11 @@ function convertISTtoUTC(istDateTimeString) {
 function convertUTCtoIST(utcDateTimeString) {
     if (!utcDateTimeString) return '';
     try {
-        // Handle different date formats from backend
-        let utcDate;
-        if (utcDateTimeString.includes('T')) {
-            // ISO format: 2025-11-15T10:30:00
-            utcDate = new Date(utcDateTimeString + (utcDateTimeString.endsWith('Z') ? '' : 'Z'));
-        } else {
-            // Simple format: assume it's already a valid date string
-            utcDate = new Date(utcDateTimeString);
-        }
+        // Parse as UTC and convert to IST
+        const utcDate = new Date(utcDateTimeString + (utcDateTimeString.endsWith('Z') ? '' : 'Z'));
         
         if (isNaN(utcDate.getTime())) {
-            return utcDateTimeString; // Return original if parsing fails
+            return utcDateTimeString;
         }
         
         return utcDate.toLocaleString('en-IN', {
@@ -34,11 +27,12 @@ function convertUTCtoIST(utcDateTimeString) {
             day: '2-digit',
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit'
+            second: '2-digit',
+            hour12: false
         });
     } catch (error) {
         console.error('Date conversion error:', error, utcDateTimeString);
-        return utcDateTimeString; // Return original string if conversion fails
+        return utcDateTimeString;
     }
 }
 
@@ -848,39 +842,66 @@ async function generateSalesChart() {
         const ordersResponse = await fetch(ordersUrl);
         const orders = await ordersResponse.json();
         
-        // Generate complete time range based on filter dates
-        const startDateTime = new Date(startDate + 'T00:00:00');
-        const endDateTime = new Date(endDate + 'T23:59:59');
+        // Generate complete time range in IST
         const timeLabels = [];
         const salesData = [];
         
-        // Create hourly slots for the entire date range
-        const current = new Date(startDateTime);
-        while (current <= endDateTime) {
+        // Create IST date objects
+        const startIST = new Date(startDate + 'T00:00:00+05:30');
+        const endIST = new Date(endDate + 'T23:59:59+05:30');
+        
+        // Create hourly slots for the entire date range in IST
+        const current = new Date(startIST);
+        while (current <= endIST) {
             const label = current.toLocaleString('en-IN', {
                 timeZone: 'Asia/Kolkata',
                 month: '2-digit',
                 day: '2-digit',
                 year: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
-            }).replace(', ', ', ');
+                minute: '2-digit',
+                hour12: false
+            });
             timeLabels.push(label);
             salesData.push(0); // Initialize with 0
             current.setHours(current.getHours() + 1);
         }
         
         // Fill in actual sales data
+        console.log('Orders:', orders.length);
+        console.log('Time labels sample:', timeLabels.slice(0, 3));
+        
         orders.forEach(order => {
-            const orderDateTime = convertUTCtoIST(order.orderDateTime);
-            const orderHour = orderDateTime.split(':')[0] + ':00';
+            const orderDate = new Date(order.orderDateTime + (order.orderDateTime.endsWith('Z') ? '' : 'Z'));
+            const orderIST = orderDate.toLocaleString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
             
-            // Find matching time slot
-            const index = timeLabels.findIndex(label => label.startsWith(orderHour));
+            console.log('Order time:', order.orderDateTime, '-> IST:', orderIST);
+            
+            // Find exact match by creating same format
+            const index = timeLabels.findIndex(label => {
+                const labelDate = label.split(', ')[0];
+                const labelTime = label.split(', ')[1].split(':')[0] + ':00';
+                const orderDatePart = orderIST.split(', ')[0];
+                const orderTimePart = orderIST.split(', ')[1].split(':')[0] + ':00';
+                return labelDate === orderDatePart && labelTime === orderTimePart;
+            });
+            
+            console.log('Match index:', index);
             if (index !== -1) {
                 salesData[index] += order.totalCost;
+                console.log('Added', order.totalCost, 'to index', index);
             }
         });
+        
+        console.log('Sales data:', salesData.filter(x => x > 0));
         
         // Destroy existing chart if it exists
         if (salesChart) {

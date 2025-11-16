@@ -154,8 +154,24 @@ public class OrderService {
         return orderRepository.findById(orderId)
             .map(entity -> {
                 entity.setQuantity(newQuantity);
-                com.example.myapp.model.Order updated = orderRepository.save(entity);
-                return orderMapper.toDto(updated);
+                entity.setTotalCost(newQuantity * entity.getProduct().getPrice());
+                return orderMapper.toDto(orderRepository.save(entity));
+            })
+            .orElse(null);
+    }
+
+    @Transactional
+    public Order updateOrder(UUID orderId, Order orderDto) {
+        return orderRepository.findById(orderId)
+            .map(entity -> {
+                if (orderDto.orderDateTime() != null) {
+                    entity.setOrderDateTime(orderDto.orderDateTime());
+                }
+                if (orderDto.quantity() > 0) {
+                    entity.setQuantity(orderDto.quantity());
+                    entity.setTotalCost(orderDto.quantity() * entity.getProduct().getPrice());
+                }
+                return orderMapper.toDto(orderRepository.save(entity));
             })
             .orElse(null);
     }
