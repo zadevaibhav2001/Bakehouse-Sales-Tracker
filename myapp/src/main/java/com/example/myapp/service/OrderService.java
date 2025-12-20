@@ -268,4 +268,19 @@ public class OrderService {
             .map(orderMapper::toDto)
             .collect(Collectors.toList());
     }
+
+    /**
+     * Get count of orders for today
+     */
+    @Transactional(readOnly = true)
+    public long getTodaysOrderCount() {
+        log.debug("Counting today's orders");
+        LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1).minusNanos(1);
+        
+        Instant startInstant = startOfDay.toInstant(ZoneOffset.UTC);
+        Instant endInstant = endOfDay.toInstant(ZoneOffset.UTC);
+        
+        return orderRepository.countOrdersForToday(startInstant, endInstant);
+    }
 }

@@ -1340,3 +1340,34 @@ tr:hover {
         font-size: 1.1rem;
     }
 }
+/* Dashboard Chart */
+.dashboard-chart {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(184, 149, 106, 0.15);
+    border: 2px solid var(--border-color);
+    margin-top: 2rem;
+}
+
+.dashboard-chart h3 {
+    color: var(--christmas-red);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.dashboard-chart .chart-container {
+    height: 300px;
+    position: relative;
+}
+
+@media (max-width: 768px) {
+    .dashboard-chart {
+        padding: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .dashboard-chart .chart-container {
+        height: 250px;
+    }
+}

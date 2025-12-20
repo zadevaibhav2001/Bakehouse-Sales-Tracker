@@ -348,4 +348,15 @@ public class OrderController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    /**
+     * Get today's order count
+     * GET /api/orders/count/today
+     */
+    @GetMapping("/count/today")
+    public ResponseEntity<Map<String, Object>> getTodaysOrderCount() {
+        log.info("GET /api/orders/count/today");
+        long count = orderService.getTodaysOrderCount();
+        return ResponseEntity.ok(Map.of("todaysOrderCount", count));
+    }
 }
