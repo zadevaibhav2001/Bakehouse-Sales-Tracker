@@ -118,6 +118,7 @@ body {
     font-family: 'Georgia', serif;
     font-weight: 400;
     letter-spacing: 1px;
+    font-size: 3rem !important;
 }
 
 .nav-menu {
@@ -611,7 +612,7 @@ tr:hover {
     }
 
     .nav-brand h1 {
-        font-size: 2.2rem;
+        font-size: 2rem;
     }
 
     .mobile-menu-toggle {
@@ -697,7 +698,7 @@ tr:hover {
     }
 
     .section h2 {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         margin-bottom: 1rem;
         margin-top: 1.5rem;
     }
@@ -1677,7 +1678,7 @@ tr:hover {
 .section h2 {
     color: var(--christmas-red);
     margin-bottom: 1.5rem;
-    font-size: 2rem;
+    font-size: 1.2rem !important;
     text-shadow: 2px 2px 4px rgba(196, 30, 58, 0.2);
     position: relative;
 }
@@ -1734,4 +1735,53 @@ tr:hover {
     .christmas-navbar::before {
         animation: none;
     }
+}
+/* Font Size Overrides - Ensure proper hierarchy */
+.nav-brand h1 {
+    font-size: 3rem !important;
+}
+
+#dashboard h2 {
+    font-size: 1.4rem !important;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .nav-brand h1 {
+        font-size: 2.2rem !important;
+    }
+    
+    #dashboard h2 {
+        font-size: 1.2rem !important;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-brand h1 {
+        font-size: 1.8rem !important;
+    }
+    
+    #dashboard h2 {
+        font-size: 1.1rem !important;
+        text-align: center;
+    }
+}
+/* Mark In/Out Button Colors */
+.btn-mark-out {
+    background: var(--success-color) !important;
+    color: white !important;
+}
+
+.btn-mark-out:hover {
+    background: #6a8f42 !important;
+}
+
+.btn-mark-in {
+    background: #F5E050 !important;
+    color: #333 !important;
+}
+
+.btn-mark-in:hover {
+    background: #F0D840 !important;
 }

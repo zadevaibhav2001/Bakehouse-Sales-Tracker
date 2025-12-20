@@ -236,7 +236,7 @@ function displayProducts(products) {
                 <div class="product-price">₹${product.price.toFixed(2)}</div>
             </div>
             <div class="product-actions">
-                <button class="btn btn-secondary" onclick="toggleStock(${product.id}, ${!product.inStock})">
+                <button class="btn ${product.inStock ? 'btn-mark-out' : 'btn-mark-in'}" onclick="toggleStock(${product.id}, ${!product.inStock})">
                     <i class="fas fa-${product.inStock ? 'times' : 'check'}"></i>
                     ${product.inStock ? 'Mark Out' : 'Mark In'}
                 </button>
