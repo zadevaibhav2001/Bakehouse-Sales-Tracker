@@ -77,4 +77,10 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
      * Find orders with total cost greater than specified amount
      */
     List<Order> findByTotalCostGreaterThan(double minCost);
+
+    /**
+     * Count orders for today (between start and end of day)
+     */
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.orderDateTime BETWEEN :startOfDay AND :endOfDay")
+    long countOrdersForToday(@Param("startOfDay") Instant startOfDay, @Param("endOfDay") Instant endOfDay);
 }

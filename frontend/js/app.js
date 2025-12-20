@@ -163,17 +163,18 @@ async function loadDashboard() {
         const startUTC = convertISTtoUTC(todayIST + 'T00:00:00');
         const endUTC = convertISTtoUTC(todayIST + 'T23:59:59');
         
-        const [orders, todayRevenue, products] = await Promise.all([
-            fetch(`${API_BASE}/orders/recent`).then(r => r.json()),
+        const [todayRevenue, products, todayOrderCount] = await Promise.all([
             fetch(`${API_BASE}/orders/revenue/between?start=${startUTC}&end=${endUTC}`).then(r => r.json()),
-            fetch(`${API_BASE}/products`).then(r => r.json())
+            fetch(`${API_BASE}/products`).then(r => r.json()),
+            fetch(`${API_BASE}/orders/count/today`).then(r => r.json())
         ]);
 
-        document.getElementById('totalOrders').textContent = orders.length;
+        document.getElementById('totalOrders').textContent = todayOrderCount.todaysOrderCount;
         document.getElementById('totalRevenue').textContent = `₹${todayRevenue.totalRevenue.toFixed(2)}`;
         document.getElementById('totalProducts').textContent = products.length;
 
-        displayRecentOrders(orders.slice(0, 5));
+        // Generate today's sales chart
+        await generateDashboardSalesChart(todayIST, todayIST);
     } catch (error) {
         Swal.fire({
             icon: 'error',
@@ -819,6 +820,89 @@ function displayHighValueOrders(orders, minCost, startDate = null, endDate = nul
 
 // Sales Chart
 let salesChart = null;
+let dashboardSalesChart = null;
+
+async function generateDashboardSalesChart(startDate, endDate) {
+    try {
+        // Convert IST input to UTC for API calls
+        const startUTC = convertISTtoUTC(startDate + 'T00:00:00');
+        const endUTC = convertISTtoUTC(endDate + 'T23:59:59');
+        
+        const ordersUrl = `${API_BASE}/orders/between?start=${startUTC}&end=${endUTC}`;
+        const ordersResponse = await fetch(ordersUrl);
+        const orders = await ordersResponse.json();
+        
+        // Generate hourly time slots for today
+        const timeLabels = [];
+        const salesData = [];
+        
+        for (let hour = 0; hour < 24; hour++) {
+            const timeLabel = `${hour.toString().padStart(2, '0')}:00`;
+            timeLabels.push(timeLabel);
+            salesData.push(0);
+        }
+        
+        // Fill in actual sales data
+        orders.forEach(order => {
+            const orderDate = new Date(order.orderDateTime + (order.orderDateTime.endsWith('Z') ? '' : 'Z'));
+            const orderIST = orderDate.toLocaleString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                hour12: false
+            });
+            
+            const hourIndex = parseInt(orderIST.split(':')[0]);
+            if (hourIndex >= 0 && hourIndex < 24) {
+                salesData[hourIndex] += order.totalCost;
+            }
+        });
+        
+        // Destroy existing chart if it exists
+        if (dashboardSalesChart) {
+            dashboardSalesChart.destroy();
+        }
+        
+        // Create new chart
+        const ctx = document.getElementById('dashboardSalesChart').getContext('2d');
+        dashboardSalesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [{
+                    label: 'Sales (₹)',
+                    data: salesData,
+                    borderColor: 'rgb(196, 30, 58)',
+                    backgroundColor: 'rgba(196, 30, 58, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + value.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Today's Hourly Sales - ${startDate}`
+                    }
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error generating dashboard chart:', error);
+    }
+}
 
 async function generateSalesChart() {
     const startDate = document.getElementById('reportStartDate').value;
