@@ -6,6 +6,9 @@
     <title>The Bakehouse - Sales Dashboard</title>
     <link rel="icon" type="image/png" href="images/logo.png">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -33,7 +36,7 @@
     <main class="container">
         <!-- Dashboard Section -->
         <section id="dashboard" class="section active">
-            <h2>Sales Dashboard</h2>
+            <h2><i class="fas fa-chart-line"></i> Sales Dashboard</h2>
             
             <div class="stats-grid">
                 <div class="stat-card" onclick="navigateToCreateOrders()" style="cursor: pointer;">
@@ -43,16 +46,18 @@
                     <div class="stat-content">
                         <h3>Create</h3>
                         <p>New Order</p>
+                        <small class="stat-hint">Click to add orders</small>
                     </div>
                 </div>
                 
                 <div class="stat-card" onclick="navigateToTodaysReport()" style="cursor: pointer;">
                     <div class="stat-icon green">
-                        <span style="font-family: 'Segoe UI', 'Noto Sans', Arial, sans-serif;">₹</span>
+                        <i class="fas fa-rupee-sign"></i>
                     </div>
                     <div class="stat-content">
                         <h3 id="totalRevenue">₹0.00</h3>
                         <p>Today's Revenue</p>
+                        <small class="stat-hint">Click for detailed report</small>
                     </div>
                 </div>
                 
@@ -63,6 +68,7 @@
                     <div class="stat-content">
                         <h3 id="totalOrders">0</h3>
                         <p>Today's Orders</p>
+                        <small class="stat-hint">Click to view all orders</small>
                     </div>
                 </div>
                 
@@ -73,12 +79,13 @@
                     <div class="stat-content">
                         <h3 id="totalProducts">0</h3>
                         <p>Products</p>
+                        <small class="stat-hint">Click to manage products</small>
                     </div>
                 </div>
             </div>
 
             <div class="dashboard-chart">
-                <h3>Today's Sales Chart</h3>
+                <h3><i class="fas fa-chart-area"></i> Today's Sales Chart</h3>
                 <div class="chart-container">
                     <canvas id="dashboardSalesChart" width="400" height="200"></canvas>
                 </div>
@@ -88,19 +95,23 @@
         <!-- Products Section -->
         <section id="products" class="section">
             <div class="section-header">
-                <h2>Products</h2>
+                <h2><i class="fas fa-box"></i> Products</h2>
                 <button class="btn btn-primary" onclick="showAddProductModal()">
                     <i class="fas fa-plus"></i> Add Product
                 </button>
             </div>
 
             <div class="filters">
-                <input type="text" id="productSearch" placeholder="Search products..." class="search-input">
-                <select id="stockFilter" class="filter-select">
-                    <option value="all">All Products</option>
-                    <option value="inStock">In Stock</option>
-                    <option value="outOfStock">Out of Stock</option>
-                </select>
+                <div class="filter-group">
+                    <input type="text" id="productSearch" placeholder="🔍 Search products..." class="search-input">
+                </div>
+                <div class="filter-group">
+                    <select id="stockFilter" class="filter-select">
+                        <option value="all">📦 All Products</option>
+                        <option value="inStock">✅ In Stock</option>
+                        <option value="outOfStock">❌ Out of Stock</option>
+                    </select>
+                </div>
                 <button class="btn btn-secondary" onclick="exportProducts()">
                     <i class="fas fa-file-excel"></i> Export Excel
                 </button>
@@ -112,7 +123,10 @@
         <!-- Create Orders Section -->
         <section id="create-orders" class="section">
             <div class="section-header">
-                <h2>Create Orders</h2>
+                <h2><i class="fas fa-plus-circle"></i> Create Orders</h2>
+                <div class="section-subtitle">
+                    <p>Select products and quantities to create new orders</p>
+                </div>
             </div>
 
             <div id="orderProductsList" class="order-products-list"></div>
@@ -121,16 +135,16 @@
         <!-- Order History Section -->
         <section id="order-history" class="section">
             <div class="section-header">
-                <h2>Order History</h2>
+                <h2><i class="fas fa-history"></i> Order History</h2>
             </div>
             
             <div class="filters">
                 <div class="date-group">
-                    <label for="startDate">Start Date (IST):</label>
+                    <label for="startDate"><i class="fas fa-calendar-alt"></i> Start Date (IST):</label>
                     <input type="date" id="startDate" class="date-input">
                 </div>
                 <div class="date-group">
-                    <label for="endDate">End Date (IST):</label>
+                    <label for="endDate"><i class="fas fa-calendar-alt"></i> End Date (IST):</label>
                     <input type="date" id="endDate" class="date-input">
                 </div>
                 <button class="btn btn-secondary" onclick="filterOrders()">
@@ -146,43 +160,57 @@
 
         <!-- Reports Section -->
         <section id="reports" class="section">
-            <h2>Sales Reports</h2>
+            <h2><i class="fas fa-chart-bar"></i> Sales Reports</h2>
             
             <!-- Common Date Filter -->
             <div class="common-filter">
                 <div class="report-form">
                     <div class="date-group">
-                        <label for="reportStartDate">Start Date (IST):</label>
+                        <label for="reportStartDate"><i class="fas fa-calendar-alt"></i> Start Date (IST):</label>
                         <input type="date" id="reportStartDate" class="date-input">
                     </div>
                     <div class="date-group">
-                        <label for="reportEndDate">End Date (IST):</label>
+                        <label for="reportEndDate"><i class="fas fa-calendar-alt"></i> End Date (IST):</label>
                         <input type="date" id="reportEndDate" class="date-input">
                     </div>
-                    <button class="btn btn-primary" onclick="generateReports()">Generate Reports & Chart</button>
+                    <button class="btn btn-primary" onclick="generateReports()">
+                        <i class="fas fa-chart-line"></i> Generate Reports & Chart
+                    </button>
                 </div>
             </div>
             
             <div class="reports-container">
                 <div class="report-card revenue-card">
-                    <h3>Revenue by Date Range</h3>
-                    <div id="revenueResult" class="report-result"></div>
+                    <h3><i class="fas fa-rupee-sign"></i> Revenue by Date Range</h3>
+                    <div id="revenueResult" class="report-result">
+                        <div class="empty-state">
+                            <i class="fas fa-chart-pie"></i>
+                            <p>Select dates and generate report to view revenue data</p>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="report-card chart-card">
-                    <h3>Sales Chart</h3>
+                    <h3><i class="fas fa-chart-area"></i> Sales Chart</h3>
                     <div class="chart-container">
                         <canvas id="salesChart" width="400" height="200"></canvas>
                     </div>
                 </div>
 
                 <div class="report-card high-value-card">
-                    <h3>High Value Orders</h3>
+                    <h3><i class="fas fa-star"></i> High Value Orders</h3>
                     <div class="report-form">
-                        <input type="number" id="minCost" placeholder="Minimum cost" class="input">
-                        <button class="btn btn-primary" onclick="getHighValueOrders()">Search</button>
+                        <input type="number" id="minCost" placeholder="💰 Minimum cost" class="input">
+                        <button class="btn btn-primary" onclick="getHighValueOrders()">
+                            <i class="fas fa-search"></i> Search
+                        </button>
                     </div>
-                    <div id="highValueResult" class="report-result"></div>
+                    <div id="highValueResult" class="report-result">
+                        <div class="empty-state">
+                            <i class="fas fa-gem"></i>
+                            <p>Enter minimum cost to find high value orders</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -192,23 +220,26 @@
     <div id="addProductModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('addProductModal')">&times;</span>
-            <h2>Add New Product</h2>
+            <h2><i class="fas fa-plus-circle"></i> Add New Product</h2>
             <form id="addProductForm" onsubmit="addProduct(event)">
                 <div class="form-group">
-                    <label>Product Name</label>
-                    <input type="text" name="name" required class="input">
+                    <label><i class="fas fa-tag"></i> Product Name</label>
+                    <input type="text" name="name" required class="input" placeholder="Enter product name">
                 </div>
                 <div class="form-group">
-                    <label>Price (₹)</label>
-                    <input type="number" name="price" step="0.01" required class="input">
+                    <label><i class="fas fa-rupee-sign"></i> Price (₹)</label>
+                    <input type="number" name="price" step="0.01" required class="input" placeholder="0.00">
                 </div>
                 <div class="form-group">
-                    <label>
+                    <label class="checkbox-label">
                         <input type="checkbox" name="inStock" checked>
-                        In Stock
+                        <span class="checkmark"></span>
+                        <i class="fas fa-check-circle"></i> In Stock
                     </label>
                 </div>
-                <button type="submit" class="btn btn-primary">Add Product</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Add Product
+                </button>
             </form>
         </div>
     </div>
